@@ -10,8 +10,8 @@ import type { ParticleSystemRef } from './ParticleSystem';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { sound } from '../utils/SoundEngine';
 import type { perk } from '../utils/ProgressionSystem';
-
 import MobileControls from './MobileControls';
+import { GameMode } from '../App';
 
 export interface TileData {
     q: number;
@@ -20,12 +20,15 @@ export interface TileData {
 }
 
 interface IsometricGridProps {
+    mode: GameMode;
     onStateUpdate: (state: { xp?: number; score?: number; level?: number; activePerks?: perk[] }) => void;
 }
 
-const HEX_RADIUS = 5; // Radius of the board hexagon
+const HEX_RADIUS = 5;
 
-const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate }) => {
+const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) => {
+    const [balance, setBalance] = useState({ x: 0, y: 0 });
+    const [isFlipping, setIsFlipping] = useState(false);
     const [tiles, setTiles] = useState<TileData[]>(() => {
         const initialTiles: TileData[] = [];
         for (let q = -HEX_RADIUS; q <= HEX_RADIUS; q++) {
@@ -52,6 +55,61 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate }) => {
     const [combo, setCombo] = useState(0);
     const comboTimer = useRef<number | null>(null);
     const particlesRef = useRef<ParticleSystemRef>(null);
+
+    // Physics Engine for TILT Mode
+    useEffect(() => {
+        if (mode !== 'tilt' || isGameOver || showShop) return;
+
+        const interval = setInterval(() => {
+            setBalance(prev => {
+                let torqueX = 0;
+                let torqueY = 0;
+
+                // 1. Weight of Tiles (Pellets)
+                tiles.forEach(tile => {
+                    if (tile.state === 'gray') {
+                        const { x, y } = getIsometricPos(tile.q, tile.r);
+                        torqueX += (x / 200) * 0.1;
+                        torqueY += (y / 200) * 0.1;
+                    }
+                });
+
+                // 2. Weight of Player (Significant impact)
+                const { x: px, y: py } = getIsometricPos(q, r);
+                torqueX += (px / 200) * 0.8;
+                torqueY += (py / 200) * 0.8;
+
+                // Apply smoothing
+                const nextX = prev.x + (torqueX - prev.x) * 0.05;
+                const nextY = prev.y + (torqueY - prev.y) * 0.05;
+
+                // Check for Flip Condition
+                if (Math.abs(nextX) > 15 || Math.abs(nextY) > 15) {
+                    setIsFlipping(true);
+                    setIsGameOver(true);
+                    sound.playDeath();
+                    setTimeout(() => window.location.reload(), 3000);
+                }
+
+                return { x: nextX, y: nextY };
+            });
+        }, 50);
+
+        return () => clearInterval(interval);
+    }, [mode, tiles, q, r, isGameOver, showShop]);
+
+    const tilt = useMemo(() => {
+        if (mode === 'tilt') {
+            return {
+                rotateX: 55 + balance.y,
+                rotateZ: -balance.x
+            };
+        }
+        return {
+            rotateX: 55 + (r / HEX_RADIUS) * 5,
+            rotateZ: (q / HEX_RADIUS) * 5
+        };
+    }, [mode, balance, q, r]);
 
     const movementConfig = useMemo(() => ({
         speedMultiplier: activePerks.some(p => p.id === 'speed_demon') ? 1.6 : 1.0,
@@ -201,13 +259,6 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate }) => {
         }
     }, [q, r, isJumping, isGameOver, showShop, hasSpikeArmor, stunnedGhosts, triggerShake]);
 
-    const tilt = useMemo(() => {
-        return {
-            rotateX: 55 + (r / HEX_RADIUS) * 5,
-            rotateZ: (q / HEX_RADIUS) * 5
-        };
-    }, [q, r]);
-
     return (
         <div className={`grid-container ${cameraShake ? 'shake' : ''}`}>
             <div className="bg-mainframe">
@@ -216,7 +267,13 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate }) => {
                 <div className="floating-module mod-3"></div>
             </div>
             <ParticleSystem ref={particlesRef} />
-            <div className="grid-center" style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
+            <div className={`grid-center ${isFlipping ? 'flip-death' : ''}`} style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
+                {mode === 'tilt' && (
+                    <div className="balance-meter">
+                        <div className="balance-dot" style={{ left: `${50 + balance.x * 2}%`, top: `${50 + balance.y * 2}%` }}></div>
+                        <div className="balance-warning" style={{ opacity: Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) }}>STABILITY CRITICAL</div>
+                    </div>
+                )}
                 {combo > 1 && <div className="combo-counter">COMBO X{combo}</div>}
                 {tiles.map((tile) => {
                     const { x, y } = getIsometricPos(tile.q, tile.r);
@@ -257,10 +314,11 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate }) => {
                         });
                     }} />
                 )}
-                {isGameOver && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM CRITICAL: GAME OVER</h1></div>}
+                {isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM UNSTABLE: BOARD FLIPPED</h1></div>}
+                {isGameOver && !isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM CRITICAL: GAME OVER</h1></div>}
             </div>
             <MobileControls onMove={move} />
-        </div>
+        </div >
     );
 };
 

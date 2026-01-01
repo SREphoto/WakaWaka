@@ -2,7 +2,7 @@
   "name": "wakawaka",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://username.github.io/WakaWaka",
+  "homepage": "https://SREphoto.github.io/WakaWaka",
   "type": "module",
   "scripts": {
     "dev": "vite",
