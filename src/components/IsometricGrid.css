@@ -263,6 +263,21 @@
     animation-delay: -10s;
 }
 
+/* Pivot Base for TILT Mode */
+.pivot-base {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 400px;
+    background: linear-gradient(to bottom, #1a1a2e, #000);
+    transform: translate(-50%, -50%) translateZ(-500px);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    border-top: 4px solid var(--neon-blue);
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+    z-index: -1;
+}
+
 @keyframes float-slow {
     from {
         transform: translateY(0) rotate(0);

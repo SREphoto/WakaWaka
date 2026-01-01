@@ -8,40 +8,84 @@
     transform: translate(var(--pos-x), var(--pos-y));
     z-index: var(--z-index);
     pointer-events: none;
+    transform-style: preserve-3d;
 }
 
 .diamond-shape {
-    width: 25px;
-    height: 25px;
-    background: linear-gradient(135deg, #fff, var(--accent-blue));
-    transform: rotateX(45deg) rotateZ(45deg) translateY(-40px);
-    box-shadow: 0 0 30px var(--accent-blue-glow), 0 0 60px var(--accent-blue-glow);
-    animation: hyper-float 1.5s infinite ease-in-out;
-    border: 2px solid #fff;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 242, 254, 0.2);
+    border: 2px solid #00f2fe;
+    transform: translateY(-60px) rotateX(45deg) rotateZ(45deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.5), inset 0 0 10px rgba(0, 242, 254, 0.5);
+    animation: hyper-float 2s infinite ease-in-out;
+}
+
+.powerup-icon {
+    transform: rotateZ(-45deg) rotateX(-45deg);
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 5px #fff);
 }
 
 @keyframes hyper-float {
-    0% {
-        transform: translateY(-40px) rotateX(45deg) rotateZ(45deg) scale(1);
+
+    0%,
+    100% {
+        transform: translateY(-60px) rotateX(45deg) rotateZ(45deg) scale(1);
     }
 
     50% {
-        transform: translateY(-60px) rotateX(45deg) rotateZ(225deg) scale(1.2);
-    }
-
-    100% {
-        transform: translateY(-40px) rotateX(45deg) rotateZ(405deg) scale(1);
+        transform: translateY(-90px) rotateX(45deg) rotateZ(225deg) scale(1.1);
     }
 }
 
 .diamond-glow {
     position: absolute;
     bottom: 30px;
-    width: 40px;
+    width: 60px;
     height: 20px;
-    background: var(--accent-blue-glow);
+    background: radial-gradient(ellipse, #00f2fe 0%, transparent 70%);
+    filter: blur(10px);
+    opacity: 0.8;
+    animation: pulse 2s infinite;
+}
+
+.diamond-ring {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(0, 242, 254, 0.3);
     border-radius: 50%;
-    filter: blur(15px);
-    opacity: 0.6;
-    animation: pulse 1.5s infinite;
+    transform: translateY(-60px) rotateX(90deg);
+    animation: ring-spin 4s infinite linear;
+}
+
+@keyframes ring-spin {
+    from {
+        transform: translateY(-60px) rotateX(90deg) rotateZ(0deg);
+    }
+
+    to {
+        transform: translateY(-60px) rotateX(90deg) rotateZ(360deg);
+    }
+}
+
+/* Specific Multi-color styles */
+.pellet_shooter {
+    --accent: #ff00ff;
+}
+
+.ghost_freeze {
+    --accent: #00ffff;
+}
+
+.paint_bomb {
+    --accent: #ff0000;
+}
+
+.heavy_stomp {
+    --accent: #ffff00;
 }

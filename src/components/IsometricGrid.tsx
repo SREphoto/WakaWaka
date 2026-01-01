@@ -10,8 +10,10 @@ import type { ParticleSystemRef } from './ParticleSystem';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
 import { sound } from '../utils/SoundEngine';
 import type { perk } from '../utils/ProgressionSystem';
+import type { PowerUp } from '../utils/PowerUpSystem';
+import { POWER_UPS } from '../utils/PowerUpSystem';
 import MobileControls from './MobileControls';
-import { GameMode } from '../App';
+import type { GameMode } from '../App';
 
 export interface TileData {
     q: number;
@@ -27,8 +29,7 @@ interface IsometricGridProps {
 const HEX_RADIUS = 5;
 
 const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) => {
-    const [balance, setBalance] = useState({ x: 0, y: 0 });
-    const [isFlipping, setIsFlipping] = useState(false);
+    const [activePerks, setActivePerks] = useState<perk[]>([]);
     const [tiles, setTiles] = useState<TileData[]>(() => {
         const initialTiles: TileData[] = [];
         for (let q = -HEX_RADIUS; q <= HEX_RADIUS; q++) {
@@ -41,8 +42,11 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
         return initialTiles;
     });
 
-    const [activePerks, setActivePerks] = useState<perk[]>([]);
+    const [balance, setBalance] = useState({ x: 0, y: 0 });
+    const [isFlipping, setIsFlipping] = useState(false);
+    const [ghostPositions, setGhostPositions] = useState<Record<string, { q: number, r: number }>>({});
     const [isPowered, setIsPowered] = useState(false);
+    const [currentPowerUp, setCurrentPowerUp] = useState<PowerUp | undefined>(POWER_UPS[0]);
     const [diamondPos, setDiamondPos] = useState({ q: HEX_RADIUS, r: -HEX_RADIUS });
     const [diamondActive, setDiamondActive] = useState(true);
     const [isGameOver, setIsGameOver] = useState(false);
@@ -56,60 +60,11 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const comboTimer = useRef<number | null>(null);
     const particlesRef = useRef<ParticleSystemRef>(null);
 
-    // Physics Engine for TILT Mode
-    useEffect(() => {
-        if (mode !== 'tilt' || isGameOver || showShop) return;
+    const [activeEffects, setActiveEffects] = useState<string[]>([]);
 
-        const interval = setInterval(() => {
-            setBalance(prev => {
-                let torqueX = 0;
-                let torqueY = 0;
-
-                // 1. Weight of Tiles (Pellets)
-                tiles.forEach(tile => {
-                    if (tile.state === 'gray') {
-                        const { x, y } = getIsometricPos(tile.q, tile.r);
-                        torqueX += (x / 200) * 0.1;
-                        torqueY += (y / 200) * 0.1;
-                    }
-                });
-
-                // 2. Weight of Player (Significant impact)
-                const { x: px, y: py } = getIsometricPos(q, r);
-                torqueX += (px / 200) * 0.8;
-                torqueY += (py / 200) * 0.8;
-
-                // Apply smoothing
-                const nextX = prev.x + (torqueX - prev.x) * 0.05;
-                const nextY = prev.y + (torqueY - prev.y) * 0.05;
-
-                // Check for Flip Condition
-                if (Math.abs(nextX) > 15 || Math.abs(nextY) > 15) {
-                    setIsFlipping(true);
-                    setIsGameOver(true);
-                    sound.playDeath();
-                    setTimeout(() => window.location.reload(), 3000);
-                }
-
-                return { x: nextX, y: nextY };
-            });
-        }, 50);
-
-        return () => clearInterval(interval);
-    }, [mode, tiles, q, r, isGameOver, showShop]);
-
-    const tilt = useMemo(() => {
-        if (mode === 'tilt') {
-            return {
-                rotateX: 55 + balance.y,
-                rotateZ: -balance.x
-            };
-        }
-        return {
-            rotateX: 55 + (r / HEX_RADIUS) * 5,
-            rotateZ: (q / HEX_RADIUS) * 5
-        };
-    }, [mode, balance, q, r]);
+    const onGhostPosChange = useCallback((id: string, q: number, r: number) => {
+        setGhostPositions(prev => ({ ...prev, [id]: { q, r } }));
+    }, []);
 
     const movementConfig = useMemo(() => ({
         speedMultiplier: activePerks.some(p => p.id === 'speed_demon') ? 1.6 : 1.0,
@@ -119,11 +74,6 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const isValidPos = useCallback((q: number, r: number) => {
         return tiles.some(t => t.q === q && t.r === r);
     }, [tiles]);
-
-    const triggerShake = useCallback(() => {
-        setCameraShake(true);
-        setTimeout(() => setCameraShake(false), 500);
-    }, []);
 
     const paintTile = useCallback((q: number, r: number, isSplash = false) => {
         let paintedCount = 0;
@@ -153,32 +103,10 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
         return paintedCount;
     }, []);
 
-    useEffect(() => {
-        if (activePerks.some(p => p.id === 'spike_armor')) setHasSpikeArmor(true);
-        if (activePerks.some(p => p.id === 'turret')) {
-            const goldTiles = tiles.filter(t => t.state === 'gold');
-            if (goldTiles.length > 0) {
-                const randomTile = goldTiles[Math.floor(Math.random() * goldTiles.length)];
-                setTurrets(prev => [...prev, { q: randomTile.q, r: randomTile.r }]);
-            }
-        }
-    }, [activePerks, tiles]);
-
-    useEffect(() => {
-        if (turrets.length === 0) return;
-        const interval = setInterval(() => {
-            setTiles(prev => {
-                const grayTiles = prev.filter(t => t.state === 'gray');
-                if (grayTiles.length === 0) return prev;
-                const randomTile = grayTiles[Math.floor(Math.random() * grayTiles.length)];
-                sound.playPaint();
-                const { x, y } = getIsometricPos(randomTile.q, randomTile.r);
-                particlesRef.current?.emit(x + window.innerWidth / 2, y + window.innerHeight / 2 - 50, '#9933ff', 10);
-                return prev.map(t => t.q === randomTile.q && t.r === randomTile.r ? { ...t, state: 'gold' } : t);
-            });
-        }, 3000);
-        return () => clearInterval(interval);
-    }, [turrets]);
+    const triggerShake = useCallback(() => {
+        setCameraShake(true);
+        setTimeout(() => setCameraShake(false), 500);
+    }, []);
 
     const handlePlayerMove = useCallback((q: number, r: number) => {
         if (isGameOver || showShop) return;
@@ -218,6 +146,27 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
             sound.playPowerUp();
             const { x, y } = getIsometricPos(q, r);
             particlesRef.current?.emit(x + window.innerWidth / 2, y + window.innerHeight / 2 - 50, '#00ccff', 20);
+
+            // Activate specific effect
+            if (currentPowerUp) {
+                const effectId = currentPowerUp.type;
+                setActiveEffects(prev => [...prev, effectId]);
+
+                if (currentPowerUp.duration > 0) {
+                    setTimeout(() => {
+                        setActiveEffects(prev => prev.filter(e => e !== effectId));
+                    }, currentPowerUp.duration);
+                }
+
+                // Instant Effects
+                if (effectId === 'paint_bomb') {
+                    const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, -1], [-1, 1], [0, 2], [0, -2], [2, 0], [-2, 0]];
+                    neighbors.forEach(([dq, dr]) => paintTile(q + dq, r + dr, true));
+                }
+                if (effectId === 'stabilizer') setBalance({ x: 0, y: 0 });
+                if (effectId === 'teleport') move(0, 0);
+            }
+
             setDiamondActive(false);
             setIsPowered(true);
             setTimeout(() => setIsPowered(false), 8000);
@@ -225,14 +174,78 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 const grayTiles = tiles.filter(t => t.state === 'gray');
                 if (grayTiles.length > 0) {
                     const nextDiamond = grayTiles[Math.floor(Math.random() * grayTiles.length)];
+                    const nextType = POWER_UPS[Math.floor(Math.random() * POWER_UPS.length)];
                     setDiamondPos({ q: nextDiamond.q, r: nextDiamond.r });
+                    setCurrentPowerUp(nextType);
                     setDiamondActive(true);
                 }
             }, 12000);
         }
-    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles]);
+    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles, currentPowerUp, move]);
 
     const { q, r, isJumping, direction, move } = usePlayerMovement(handlePlayerMove, movementConfig, isValidPos);
+
+    // Physics Engine for TILT Mode
+    useEffect(() => {
+        if (mode !== 'tilt' || isGameOver || showShop) return;
+
+        const interval = setInterval(() => {
+            setBalance(prev => {
+                let torqueX = 0;
+                let torqueY = 0;
+
+                // 1. Weight of Tiles (Pellets)
+                tiles.forEach(tile => {
+                    if (tile.state === 'gray') {
+                        const { x, y } = getIsometricPos(tile.q, tile.r);
+                        torqueX += (x / 200) * 0.1;
+                        torqueY += (y / 200) * 0.1;
+                    }
+                });
+
+                // 2. Weight of Player
+                const { x: px, y: py } = getIsometricPos(q, r);
+                torqueX += (px / 200) * 0.8;
+                torqueY += (py / 200) * 0.8;
+
+                // 3. Weight of Ghosts
+                Object.values(ghostPositions).forEach(pos => {
+                    const { x, y } = getIsometricPos(pos.q, pos.r);
+                    torqueX += (x / 200) * 0.4;
+                    torqueY += (y / 200) * 0.4;
+                });
+
+                // Apply smoothing
+                const nextX = prev.x + (torqueX - prev.x) * 0.05;
+                const nextY = prev.y + (torqueY - prev.y) * 0.05;
+
+                // Check for Flip Condition
+                if (Math.abs(nextX) > 15 || Math.abs(nextY) > 15) {
+                    setIsFlipping(true);
+                    setIsGameOver(true);
+                    sound.playDeath();
+                    setTimeout(() => window.location.reload(), 3000);
+                }
+
+                return { x: nextX, y: nextY };
+            });
+        }, 50);
+
+        return () => clearInterval(interval);
+    }, [mode, tiles, q, r, isGameOver, showShop, ghostPositions]);
+
+    const tilt = useMemo(() => {
+        if (mode === 'tilt') {
+            return {
+                rotateX: 55 + balance.y,
+                rotateZ: -balance.x
+            };
+        }
+        return {
+            rotateX: 55 + (r / HEX_RADIUS) * 5,
+            rotateZ: (q / HEX_RADIUS) * 5
+        };
+    }, [mode, balance, q, r]);
 
     const handleCollision = useCallback((ghostPos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => {
         if (isGameOver || showShop || stunnedGhosts.includes(ghostId)) return;
@@ -259,67 +272,105 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
         }
     }, [q, r, isJumping, isGameOver, showShop, hasSpikeArmor, stunnedGhosts, triggerShake]);
 
-    return (
-        <div className={`grid-container ${cameraShake ? 'shake' : ''}`}>
-            <div className="bg-mainframe">
-                <div className="floating-module mod-1"></div>
-                <div className="floating-module mod-2"></div>
-                <div className="floating-module mod-3"></div>
-            </div>
-            <ParticleSystem ref={particlesRef} />
-            <div className={`grid-center ${isFlipping ? 'flip-death' : ''}`} style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
-                {mode === 'tilt' && (
-                    <div className="balance-meter">
-                        <div className="balance-dot" style={{ left: `${50 + balance.x * 2}%`, top: `${50 + balance.y * 2}%` }}></div>
-                        <div className="balance-warning" style={{ opacity: Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) }}>STABILITY CRITICAL</div>
+    useEffect(() => {
+        if (activePerks.some(p => p.id === 'spike_armor')) setHasSpikeArmor(true);
+        if (activePerks.some(p => p.id === 'turret')) {
+            const goldTiles = tiles.filter(t => t.state === 'gold');
+            if (goldTiles.length > 0) {
+                const randomTile = goldTiles[Math.floor(Math.random() * goldTiles.length)];
+                setTurrets(prev => [...prev, { q: randomTile.q, r: randomTile.r }]);
+            }
+        }
+    }, [activePerks, tiles]);
+
+    // EFFECT: Pellet Shooter
+    useEffect(() => {
+        if (!activeEffects.includes('pellet_shooter')) return;
+        const interval = setInterval(() => {
+            const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, -1], [-1, 1]];
+            const [dq, dr] = neighbors[Math.floor(Math.random() * neighbors.length)];
+            paintTile(q + dq, r + dr, true);
+        }, 300);
+        return () => clearInterval(interval);
+    }, [activeEffects, q, r, paintTile]);
+    const interval = setInterval(() => {
+        setTiles(prev => {
+            const grayTiles = prev.filter(t => t.state === 'gray');
+            if (grayTiles.length === 0) return prev;
+            const randomTile = grayTiles[Math.floor(Math.random() * grayTiles.length)];
+            sound.playPaint();
+            const { x, y } = getIsometricPos(randomTile.q, randomTile.r);
+            particlesRef.current?.emit(x + window.innerWidth / 2, y + window.innerHeight / 2 - 50, '#9933ff', 10);
+            return prev.map(t => t.q === randomTile.q && t.r === randomTile.r ? { ...t, state: 'gold' } : t);
+        });
+    }, 3000);
+    return () => clearInterval(interval);
+}, [turrets]);
+
+return (
+    <div className={`grid-container ${cameraShake ? 'shake' : ''}`}>
+        <div className="bg-mainframe">
+            <div className="floating-module mod-1"></div>
+            <div className="floating-module mod-2"></div>
+            <div className="floating-module mod-3"></div>
+        </div>
+        {mode === 'tilt' && <div className="pivot-base"></div>}
+        <ParticleSystem ref={particlesRef} />
+        <div className={`grid-center ${isFlipping ? 'flip-death' : ''}`} style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
+            {mode === 'tilt' && (
+                <div className="balance-meter">
+                    <div className="balance-dot" style={{ left: `${50 + balance.x * 2}%`, top: `${50 + balance.y * 2}%` }}></div>
+                    <div className="balance-warning" style={{ opacity: Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) }}>STABILITY CRITICAL</div>
+                </div>
+            )}
+            {combo > 1 && <div className="combo-counter">COMBO X{combo}</div>}
+            {tiles.map((tile) => {
+                const { x, y } = getIsometricPos(tile.q, tile.r);
+                return (
+                    <div key={`${tile.q}-${tile.r}`} className={`tile ${tile.state}`} style={{ '--pos-x': `${x}px`, '--pos-y': `${y}px`, 'zIndex': Math.floor(y + 1000) } as React.CSSProperties}>
+                        <div className="tile-side side-1"></div><div className="tile-side side-2"></div><div className="tile-side side-3"></div>
+                        <div className="tile-side side-4"></div><div className="tile-side side-5"></div><div className="tile-side side-6"></div>
+                        <div className="tile-top"></div>
                     </div>
-                )}
-                {combo > 1 && <div className="combo-counter">COMBO X{combo}</div>}
-                {tiles.map((tile) => {
-                    const { x, y } = getIsometricPos(tile.q, tile.r);
-                    return (
-                        <div key={`${tile.q}-${tile.r}`} className={`tile ${tile.state}`} style={{ '--pos-x': `${x}px`, '--pos-y': `${y}px`, 'zIndex': Math.floor(y + 1000) } as React.CSSProperties}>
-                            <div className="tile-side side-1"></div><div className="tile-side side-2"></div><div className="tile-side side-3"></div>
-                            <div className="tile-side side-4"></div><div className="tile-side side-5"></div><div className="tile-side side-6"></div>
-                            <div className="tile-top"></div>
-                        </div>
-                    );
-                })}
-                <WakaBert q={q} r={r} isJumping={isJumping} direction={direction} />
-                {!isGameOver && !showShop && (
-                    <>
-                        <Ghost id="red" type="red" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} isValidPos={isValidPos} />
-                        {level > 1 && <Ghost id="green" type="green" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} isValidPos={isValidPos} />}
-                    </>
-                )}
-                <PowerDiamond q={diamondPos.q} r={diamondPos.r} active={diamondActive} />
-                {showShop && (
-                    <LevelUpShop onSelect={(perk: perk) => {
-                        sound.playPowerUp();
-                        const nextPerks = [...activePerks, perk];
-                        setActivePerks(nextPerks);
-                        setShowShop(false);
-                        setLevel(l => l + 1);
-                        onStateUpdate({ level: level + 1, activePerks: nextPerks });
-                        setTiles(() => {
-                            const newTiles: TileData[] = [];
-                            for (let q = -HEX_RADIUS; q <= HEX_RADIUS; q++) {
-                                const rStart = Math.max(-HEX_RADIUS, -q - HEX_RADIUS);
-                                const rEnd = Math.min(HEX_RADIUS, -q + HEX_RADIUS);
-                                for (let r = rStart; r <= rEnd; r++) {
-                                    newTiles.push({ q, r, state: q === 0 && r === 0 ? 'gold' : 'gray' });
-                                }
+                );
+            })}
+            <WakaBert q={q} r={r} isJumping={isJumping} direction={direction} />
+            {!isGameOver && !showShop && (
+                <>
+                    <Ghost id="red" type="red" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                    {level > 1 && <Ghost id="green" type="green" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />}
+                </>
+            )}
+            <PowerDiamond q={diamondPos.q} r={diamondPos.r} active={diamondActive} powerUp={currentPowerUp} />
+            {showShop && (
+                <LevelUpShop onSelect={(perk: perk) => {
+                    sound.playPowerUp();
+                    const nextPerks = [...activePerks, perk];
+                    setActivePerks(nextPerks);
+                    setShowShop(false);
+                    setLevel(l => l + 1);
+                    onStateUpdate({ level: level + 1, activePerks: nextPerks });
+                    setTiles(() => {
+                        const newTiles: TileData[] = [];
+                        for (let q = -HEX_RADIUS; q <= HEX_RADIUS; q++) {
+                            const rStart = Math.max(-HEX_RADIUS, -q - HEX_RADIUS);
+                            const rEnd = Math.min(HEX_RADIUS, -q + HEX_RADIUS);
+                            for (let r = rStart; r <= rEnd; r++) {
+                                newTiles.push({ q, r, state: q === 0 && r === 0 ? 'gold' : 'gray' });
                             }
-                            return newTiles;
-                        });
-                    }} />
-                )}
-                {isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM UNSTABLE: BOARD FLIPPED</h1></div>}
-                {isGameOver && !isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM CRITICAL: GAME OVER</h1></div>}
-            </div>
+                        }
+                        return newTiles;
+                    });
+                }} />
+            )}
+            {isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM UNSTABLE: BOARD FLIPPED</h1></div>}
+            {isGameOver && !isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM CRITICAL: GAME OVER</h1></div>}
+        </div>
+        <div className="mobile-controls-layout">
             <MobileControls onMove={move} />
-        </div >
-    );
+        </div>
+    </div >
+);
 };
 
 export default IsometricGrid;

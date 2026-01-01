@@ -8,10 +8,11 @@ interface GhostProps {
     playerPos: { q: number; r: number };
     isVulnerable?: boolean;
     onCollision?: (pos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => void;
+    onPosChange?: (id: string, q: number, r: number) => void;
     isValidPos?: (q: number, r: number) => boolean;
 }
 
-const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onCollision, isValidPos }) => {
+const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onCollision, onPosChange, isValidPos }) => {
     const [pos, setPos] = useState({ q: id === 'red' ? 5 : -5, r: id === 'red' ? 0 : 0 });
     const [lastMove, setLastMove] = useState<'left' | 'right' | 'up' | 'down'>('down');
 
@@ -58,10 +59,13 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
     }, [moveTowardPlayer, type, isVulnerable]);
 
     useEffect(() => {
+        if (onPosChange) {
+            onPosChange(id, pos.q, pos.r);
+        }
         if (onCollision) {
             onCollision(pos, !!isVulnerable, id);
         }
-    }, [pos, onCollision, isVulnerable, id]);
+    }, [pos, onCollision, onPosChange, isVulnerable, id]);
 
     const { x, y } = getIsometricPos(pos.q, pos.r);
 
