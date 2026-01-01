@@ -1,0 +1,15 @@
+.pyramid-rotation {
+    transform: rotateX(60deg) rotateZ(var(--pyramid-rot)) scale(0.6);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.pyramid-tile {
+    transform: translate3d(var(--pos-x), var(--pos-y), var(--pos-z));
+}
+
+.pyramid-player-wrapper {
+    transform: translateZ(var(--player-z));
+    transform-style: preserve-3d;
+    position: absolute;
+}

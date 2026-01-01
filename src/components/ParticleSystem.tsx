@@ -1,4 +1,5 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import './ParticleSystem.css';
 
 interface Particle {
     x: number;
@@ -34,6 +35,18 @@ const ParticleSystem = forwardRef<ParticleSystemRef>((_, ref) => {
     }));
 
     useEffect(() => {
+        const handleResize = () => {
+            if (canvasRef.current) {
+                canvasRef.current.width = window.innerWidth;
+                canvasRef.current.height = window.innerHeight;
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -50,7 +63,7 @@ const ParticleSystem = forwardRef<ParticleSystemRef>((_, ref) => {
                 p.life -= 0.02;
 
                 ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.life;
+                ctx.globalAlpha = p.life > 0 ? p.life : 0;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -70,15 +83,7 @@ const ParticleSystem = forwardRef<ParticleSystemRef>((_, ref) => {
     return (
         <canvas
             ref={canvasRef}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                pointerEvents: 'none',
-                zIndex: 10002
-            }}
+            className="particle-canvas"
         />
     );
 });

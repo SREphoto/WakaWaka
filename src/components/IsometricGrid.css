@@ -359,6 +359,8 @@
     position: absolute;
     width: 10px;
     height: 10px;
+    left: var(--dot-x);
+    top: var(--dot-y);
     background: var(--neon-gold);
     border-radius: 50%;
     box-shadow: 0 0 10px var(--neon-gold);
@@ -377,6 +379,7 @@
     font-size: 0.9rem;
     text-shadow: 0 0 5px #ff3366;
     animation: balance-pulse 0.5s infinite;
+    opacity: var(--warning-opacity);
 }
 
 @keyframes balance-pulse {

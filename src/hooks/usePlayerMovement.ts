@@ -81,5 +81,10 @@ export const usePlayerMovement = (
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [move]);
 
-    return { ...pos, isJumping, direction, move };
+    const teleport = useCallback((q: number, r: number) => {
+        setPos({ q, r });
+        if (onMove) onMove(q, r);
+    }, [onMove]);
+
+    return { ...pos, isJumping, direction, move, teleport };
 };

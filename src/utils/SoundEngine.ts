@@ -70,6 +70,11 @@ class SoundEngine {
         this.playTone(800, 'sawtooth', 0.1, 0.1, 1200);
         setTimeout(() => this.playTone(1200, 'sawtooth', 0.2, 0.08, 400), 50);
     }
+
+    playTeleport() {
+        this.playTone(100, 'sine', 0.5, 0.1, 2000);
+        setTimeout(() => this.playTone(50, 'square', 0.2, 0.05, 100), 100);
+    }
 }
 
 export const sound = new SoundEngine();

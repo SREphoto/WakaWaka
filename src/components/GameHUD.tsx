@@ -28,7 +28,7 @@ const GameHUD: React.FC<GameHUDProps> = ({ score, level, xp, xpNext, activePerks
 
             <div className="hud-center xp-bar-container">
                 <div className="xp-bar">
-                    <div className="xp-fill" style={{ width: `${xpPercent}%` }}></div>
+                    <div className="xp-fill" style={{ '--xp-width': `${xpPercent}%` } as React.CSSProperties}></div>
                     <span className="xp-text">{xp} / {xpNext} XP</span>
                 </div>
             </div>
