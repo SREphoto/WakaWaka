@@ -1,0 +1,107 @@
+.game-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 2rem;
+    margin: 1rem;
+    z-index: 1000;
+    min-width: 800px;
+}
+
+.hud-left,
+.hud-right {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hud-item .label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2rem;
+    color: var(--text-secondary);
+    font-weight: 800;
+}
+
+.hud-item .value {
+    font-size: 1.4rem;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.xp-bar-container {
+    flex-grow: 1;
+    max-width: 400px;
+    position: relative;
+    margin: 0 2rem;
+}
+
+.xp-bar {
+    width: 100%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #33ff99, #00ccff);
+    box-shadow: 0 0 15px var(--accent-green-glow);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.xp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-shadow: 0 0 5px #000;
+    pointer-events: none;
+}
+
+.perks-display {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.active-perk {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--glass-border);
+    font-size: 1.2rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.active-perk:hover {
+    transform: scale(1.2);
+}
+
+.active-perk.agility {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px var(--accent-blue-glow);
+}
+
+.active-perk.strength {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 10px var(--accent-red-glow);
+}
+
+.active-perk.magic {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 10px var(--accent-gold-glow);
+}

@@ -1,0 +1,47 @@
+.power-diamond {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translate(var(--pos-x), var(--pos-y));
+    z-index: var(--z-index);
+    pointer-events: none;
+}
+
+.diamond-shape {
+    width: 25px;
+    height: 25px;
+    background: linear-gradient(135deg, #fff, var(--accent-blue));
+    transform: rotateX(45deg) rotateZ(45deg) translateY(-40px);
+    box-shadow: 0 0 30px var(--accent-blue-glow), 0 0 60px var(--accent-blue-glow);
+    animation: hyper-float 1.5s infinite ease-in-out;
+    border: 2px solid #fff;
+}
+
+@keyframes hyper-float {
+    0% {
+        transform: translateY(-40px) rotateX(45deg) rotateZ(45deg) scale(1);
+    }
+
+    50% {
+        transform: translateY(-60px) rotateX(45deg) rotateZ(225deg) scale(1.2);
+    }
+
+    100% {
+        transform: translateY(-40px) rotateX(45deg) rotateZ(405deg) scale(1);
+    }
+}
+
+.diamond-glow {
+    position: absolute;
+    bottom: 30px;
+    width: 40px;
+    height: 20px;
+    background: var(--accent-blue-glow);
+    border-radius: 50%;
+    filter: blur(15px);
+    opacity: 0.6;
+    animation: pulse 1.5s infinite;
+}

@@ -1,0 +1,139 @@
+:root {
+    --ghost-size: 40px;
+    --ghost-red: #ff3366;
+    --ghost-green: #33ff99;
+    --ghost-blue: #33ccff;
+}
+
+.ghost {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translate(var(--pos-x), var(--pos-y));
+    z-index: var(--z-index);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ghost-container-3d {
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(-55deg) rotateZ(45deg);
+    animation: ghost-float 2s infinite ease-in-out;
+}
+
+@keyframes ghost-float {
+
+    0%,
+    100% {
+        transform: rotateX(-55deg) rotateZ(45deg) translateY(0);
+    }
+
+    50% {
+        transform: rotateX(-55deg) rotateZ(45deg) translateY(-20px);
+    }
+}
+
+.ghost-body-3d {
+    width: var(--ghost-size);
+    height: calc(var(--ghost-size) * 1.2);
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.ghost.red .face {
+    background: var(--ghost-red);
+    box-shadow: 0 0 15px var(--ghost-red);
+}
+
+.ghost.green .face {
+    background: var(--ghost-green);
+    box-shadow: 0 0 15px var(--ghost-green);
+}
+
+.ghost.vulnerable .face {
+    background: var(--ghost-blue);
+    box-shadow: 0 0 20px var(--ghost-blue);
+    animation: ghost-blink 0.5s infinite alternate;
+}
+
+@keyframes ghost-blink {
+    from {
+        filter: brightness(1);
+    }
+
+    to {
+        filter: brightness(1.5);
+    }
+}
+
+.face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+}
+
+.face.front {
+    transform: translateZ(calc(var(--ghost-size) / 2));
+}
+
+.face.back {
+    transform: rotateY(180deg) translateZ(calc(var(--ghost-size) / 2));
+    filter: brightness(0.7);
+}
+
+.face.left {
+    transform: rotateY(-90deg) translateZ(calc(var(--ghost-size) / 2));
+    filter: brightness(0.8);
+}
+
+.face.right {
+    transform: rotateY(90deg) translateZ(calc(var(--ghost-size) / 2));
+    filter: brightness(0.8);
+}
+
+.face.top {
+    height: var(--ghost-size);
+    transform: rotateX(90deg) translateZ(calc(var(--ghost-size) / 2));
+    filter: brightness(1.1);
+}
+
+.ghost-eyes-3d {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform: translateZ(calc(var(--ghost-size) / 2 + 1px));
+}
+
+.eye-p {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    top: 10px;
+    border-radius: 50%;
+}
+
+.eye-p.left {
+    left: 6px;
+}
+
+.eye-p.right {
+    right: 6px;
+}
+
+.ghost-shadow-3d {
+    position: absolute;
+    bottom: -10px;
+    width: 30px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    filter: blur(4px);
+    transform: rotateX(60deg);
+}

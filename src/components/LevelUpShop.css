@@ -1,0 +1,70 @@
+.shop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.shop-container {
+    padding: 3rem;
+    text-align: center;
+    max-width: 800px;
+}
+
+.perk-options {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.perk-card {
+    flex: 1;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.perk-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+}
+
+.perk-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.perk-card.agility:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 15px var(--accent-blue-glow);
+}
+
+.perk-card.strength:hover {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 15px var(--accent-red-glow);
+}
+
+.perk-card.magic:hover {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 15px var(--accent-green-glow);
+}
+
+.perk-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.perk-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
