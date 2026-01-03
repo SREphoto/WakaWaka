@@ -1,33 +1,65 @@
 /* VS Mode Specialized Styles */
 .vs-theme {
-    --neon-blue: #ff0055;
-    --accent-blue: #ff0055;
+    --neon-blue: #00f3ff;
+    --accent-blue: #00f3ff;
     --player-gold: #ffcc00;
-    --rival-red: #ff0055;
+    --rival-blue: #00f3ff;
+    --rival-glow: #0088ff;
 }
 
 .rival-tile .tile-top {
-    background: linear-gradient(135deg, var(--rival-red), #990022);
-    box-shadow: 0 0 15px rgba(255, 0, 85, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--rival-red);
-    animation: rival-pulse 1s infinite alternate;
+    background: linear-gradient(135deg, var(--rival-blue), #004488);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.6), inset 0 0 10px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--rival-blue);
+    animation: rival-pulse 1.5s infinite alternate;
 }
 
 @keyframes rival-pulse {
     from {
-        filter: brightness(1) drop-shadow(0 0 5px var(--rival-red));
+        filter: brightness(1) drop-shadow(0 0 5px var(--rival-glow));
     }
 
     to {
-        filter: brightness(1.5) drop-shadow(0 0 15px var(--rival-red));
+        filter: brightness(1.3) drop-shadow(0 0 15px var(--rival-glow));
     }
 }
 
 .rival-bert {
     position: absolute;
     transform: translate3d(var(--rival-x), var(--rival-y), 0);
-    filter: hue-rotate(150deg) brightness(1.2);
+    filter: hue-rotate(180deg) brightness(1.2) contrast(1.2);
     transition: transform 0.5s ease-in-out;
+    pointer-events: none;
+}
+
+.stun-icon {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    animation: float 0.5s infinite alternate;
+    z-index: 100;
+}
+
+.stun-indicator {
+    font-family: 'Orbitron', monospace;
+    text-shadow: 0 0 10px yellow;
+    animation: flash 0.2s infinite;
+}
+
+@keyframes flash {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .vs-theme .tile.player .tile-top {
@@ -36,7 +68,7 @@
 }
 
 .vs-theme .tile.gray .tile-top {
-    background: #1a1a2e;
+    background: #111;
     border: 1px solid #333;
 }
 
@@ -44,8 +76,30 @@
     transform: rotateX(60deg) rotateZ(-30deg) scale(0.6);
 }
 
-.progress-segment {
-    width: var(--segment-width);
+/* Make progress bar segments distinct colors */
+.segment-player {
+    background: var(--player-gold);
+    box-shadow: 0 0 10px var(--player-gold);
+}
+
+.segment-rival {
+    background: var(--rival-blue);
+    box-shadow: 0 0 10px var(--rival-blue);
+}
+
+.vs-progress-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 10px;
+    background: #333;
+    display: flex;
+    border-radius: 5px;
+    overflow: hidden;
+    z-index: 5000;
+    border: 1px solid #555;
 }
 
 .victory-banner {
@@ -63,10 +117,22 @@
 }
 
 .defeat-banner {
-    border-color: var(--rival-red);
-    box-shadow: 0 0 50px var(--rival-red);
+    border-color: var(--rival-blue);
+    box-shadow: 0 0 50px var(--rival-blue);
 }
 
 .retry-button {
     margin-top: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid currentColor;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.retry-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
 }

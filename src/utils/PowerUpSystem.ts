@@ -18,7 +18,10 @@ export type PowerUpType =
     | 'multijump'
     | 'pellet_rain'
     | 'weight_hammer'
-    | 'chronos';
+    | 'chronos'
+    | 'vs_pellet'
+    | 'vs_slide'
+    | 'vs_shockwave';
 
 export interface PowerUp {
     id: string;
@@ -48,5 +51,9 @@ export const POWER_UPS: PowerUp[] = [
     { id: '17', type: 'multijump', icon: '👟', description: 'Triple jump enabled', duration: 12000 },
     { id: '18', type: 'pellet_rain', icon: '🌧️', description: 'Random tile paint', duration: 0 },
     { id: '19', type: 'weight_hammer', icon: '🧱', description: 'Adds weight to landing spot', duration: 10000 },
-    { id: '20', type: 'chronos', icon: '⏪', description: 'Resets balance', duration: 0 }
+    { id: '20', type: 'chronos', icon: '⏪', description: 'Resets balance', duration: 0 },
+    // VS Mode Exclusives
+    { id: 'vs_1', type: 'vs_pellet', icon: '🌑', description: 'Stuns opponent', duration: 0 },
+    { id: 'vs_2', type: 'vs_slide', icon: '📐', description: 'Paint row/slide', duration: 0 },
+    { id: 'vs_3', type: 'vs_shockwave', icon: '💥', description: 'Push opponent back', duration: 0 }
 ];

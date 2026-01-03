@@ -180,7 +180,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
         }
     }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles, currentPowerUp]);
 
-    const { q, r, isJumping, direction, move, teleport } = usePlayerMovement(handlePlayerMove, movementConfig, isValidPos);
+    const { q, r, isJumping, direction, move, teleport, moveTo } = usePlayerMovement(handlePlayerMove, movementConfig, isValidPos);
 
     useEffect(() => {
         teleportRef.current = teleport;
@@ -308,11 +308,6 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
 
     return (
         <div className={`grid-container ${cameraShake ? 'shake' : ''}`}>
-            <div className="bg-mainframe">
-                <div className="floating-module mod-1"></div>
-                <div className="floating-module mod-2"></div>
-                <div className="floating-module mod-3"></div>
-            </div>
             {mode === 'tilt' && <div className="pivot-base"></div>}
             <ParticleSystem ref={particlesRef} />
             <div className={`grid-center ${isFlipping ? 'flip-death' : ''}`} style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
@@ -326,7 +321,15 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 {tiles.map((tile) => {
                     const { x, y } = getIsometricPos(tile.q, tile.r);
                     return (
-                        <div key={`${tile.q}-${tile.r}`} className={`tile ${tile.state}`} style={{ '--pos-x': `${x}px`, '--pos-y': `${y}px`, 'zIndex': Math.floor(y + 1000) } as React.CSSProperties}>
+                        <div
+                            key={`${tile.q}-${tile.r}`}
+                            className={`tile ${tile.state}`}
+                            style={{ '--pos-x': `${x}px`, '--pos-y': `${y}px`, 'zIndex': Math.floor(y + 1000) } as React.CSSProperties}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                moveTo(tile.q, tile.r);
+                            }}
+                        >
                             <div className="tile-side side-1"></div><div className="tile-side side-2"></div><div className="tile-side side-3"></div>
                             <div className="tile-side side-4"></div><div className="tile-side side-5"></div><div className="tile-side side-6"></div>
                             <div className="tile-top"></div>

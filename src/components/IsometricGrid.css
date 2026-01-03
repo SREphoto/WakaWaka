@@ -5,9 +5,11 @@
     perspective: 2000px;
     width: 100%;
     height: 100vh;
-    background: #020205;
+    background: transparent;
     overflow: hidden;
     position: relative;
+    /* Prevent touch actions like scrolling on mobile while playing */
+    touch-action: none;
 }
 
 /* Obsidian Floor Reflection Plane */
@@ -23,41 +25,31 @@
     z-index: 0;
 }
 
-/* God Rays / Volumetric Light */
-.grid-container::after {
-    content: '';
-    position: absolute;
-    top: -100%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: repeating-linear-gradient(45deg,
-            transparent,
-            transparent 100px,
-            rgba(255, 255, 255, 0.02) 100px,
-            rgba(255, 255, 255, 0.02) 200px);
-    filter: blur(50px);
-    animation: sweep 20s infinite linear;
-    pointer-events: none;
-    z-index: 10005;
-}
-
-@keyframes sweep {
-    from {
-        transform: translateX(-10%);
-    }
-
-    to {
-        transform: translateX(10%);
-    }
-}
-
 .grid-center {
     position: relative;
     transform-style: preserve-3d;
     transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.6);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
+    /* Dynamic scaling to fit screen */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Responsive Scaling: Scale down on smaller screens */
+@media (max-width: 768px) {
+    .grid-center {
+        transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.45);
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-center {
+        transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.35);
+    }
 }
 
 .combo-counter {
@@ -72,6 +64,7 @@
     font-style: italic;
     animation: combo-pulse 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 10000;
+    pointer-events: none;
 }
 
 @keyframes combo-pulse {
@@ -94,6 +87,13 @@
     transform-style: preserve-3d;
     transform: translate3d(var(--pos-x), var(--pos-y), 0);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    /* Indicate interactivity */
+}
+
+/* Add hover effect for mouse users to preview path destination */
+.tile:hover {
+    filter: brightness(1.2);
 }
 
 .tile-side {
@@ -104,6 +104,7 @@
     transform-origin: top;
     backface-visibility: hidden;
     border: 1px solid rgba(255, 255, 255, 0.03);
+    pointer-events: none;
 }
 
 /* 3D Sides of the Hexagon */
@@ -149,6 +150,8 @@
     align-items: center;
     box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
     z-index: 2;
+    pointer-events: none;
+    /* Let clicks fall through to tile container */
 }
 
 /* States */
@@ -223,46 +226,6 @@
     }
 }
 
-/* Background Atmosphere */
-.bg-mainframe {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.floating-module {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    pointer-events: none;
-    animation: float-slow 15s infinite alternate ease-in-out;
-}
-
-.mod-1 {
-    top: 10%;
-    left: 10%;
-    width: 200px;
-    height: 150px;
-}
-
-.mod-2 {
-    top: 70%;
-    left: 80%;
-    width: 300px;
-    height: 200px;
-    animation-delay: -5s;
-}
-
-.mod-3 {
-    top: 40%;
-    left: 5%;
-    width: 150px;
-    height: 100px;
-    animation-delay: -10s;
-}
-
 /* Pivot Base for TILT Mode */
 .pivot-base {
     position: absolute;
@@ -276,16 +239,6 @@
     border-top: 4px solid var(--neon-blue);
     box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
     z-index: -1;
-}
-
-@keyframes float-slow {
-    from {
-        transform: translateY(0) rotate(0);
-    }
-
-    to {
-        transform: translateY(-100px) rotate(10deg);
-    }
 }
 
 .game-over-overlay {
