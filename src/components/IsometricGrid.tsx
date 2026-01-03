@@ -245,7 +245,10 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
 
     const handleCollision = useCallback((ghostPos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => {
         if (isGameOver || showShop || stunnedGhosts.includes(ghostId)) return;
+        // DEBUG: Log collision check
+        // console.log(`Checking collision: Ghost(${ghostPos.q},${ghostPos.r}) vs Player(${q},${r})`);
         if (ghostPos.q === q && ghostPos.r === r) {
+            console.warn(`COLLISION DETECTED! Ghost(${ghostPos.q},${ghostPos.r}) hit Player(${q},${r}). Vulnerable: ${isVulnerable}`);
             if (isVulnerable) {
                 sound.playGhostDeath();
                 const { x, y } = getIsometricPos(ghostPos.q, ghostPos.r);
@@ -260,6 +263,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                     setTimeout(() => setStunnedGhosts(prev => prev.filter(id => id !== ghostId)), 3000);
                     return;
                 }
+                console.error("GAME OVER TRIGGERED BY COLLISION");
                 sound.playDeath();
                 triggerShake();
                 setIsGameOver(true);
