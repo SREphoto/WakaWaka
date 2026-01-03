@@ -1,7 +1,7 @@
 import React from 'react';
 import { getIsometricPos } from '../utils/GameEngine';
 import './PowerDiamond.css';
-import { PowerUp } from '../utils/PowerUpSystem';
+import type { PowerUp } from '../utils/PowerUpSystem';
 
 interface PowerDiamondProps {
     q: number;

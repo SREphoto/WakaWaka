@@ -88,6 +88,40 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
         return painted;
     }, []);
 
+
+    // --- POWER UP LOGIC ---
+
+    const handlePowerUpEffect = useCallback((type: PowerUpType, who: 'player' | 'rival', originQ: number) => {
+        const opponent = who === 'player' ? 'rival' : 'player';
+
+        if (type === 'vs_pellet') { // Stun
+            if (opponent === 'rival') {
+                setRivalStunned(true);
+                setTimeout(() => setRivalStunned(false), 3000);
+            } else {
+                setPlayerStunned(true);
+                setTimeout(() => setPlayerStunned(false), 3000);
+            }
+        } else if (type === 'vs_shockwave') { // Push
+            // Simple logic: Push opponent away from center provided valid pos, or just teleport them to edge
+            if (opponent === 'rival') {
+                setRivalPos({ q: -HEX_RADIUS, r: HEX_RADIUS }); // Reset position
+            } else {
+                // Player push handled by hook if possible, or just visual shake?
+                // For now, let's just stun them extra long as penalty
+                setPlayerStunned(true);
+                setTimeout(() => setPlayerStunned(false), 1000);
+            }
+        } else if (type === 'vs_slide') { // Paint Row
+            // Paint the entire row of Q
+            const targetRow = tiles.filter(t => t.q === originQ);
+            targetRow.forEach(t => {
+                const { x, y } = getIsometricPos(t.q, t.r);
+                paintTile(t.q, t.r, who, x, y);
+            });
+        }
+    }, [setRivalStunned, setPlayerStunned, setRivalPos, tiles, paintTile]);
+
     // --- RIVAL AI ---
     useEffect(() => {
         if (isGameOver || rivalStunned) return;
@@ -102,8 +136,8 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
 
                 // Simple 'seek closest high value tile' logic
                 // Prioritize power-ups first if close
-                let bestTarget = possibleTargets[0];
-                let minScore = -Infinity;
+                // Prioritize power-ups first if close
+
 
                 // Look at neighbors for immediate moves
                 const neighbors = [
@@ -144,7 +178,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
                     if (puIndex !== -1) {
                         // AI collected powerup
                         const pu = activePowerUps[puIndex];
-                        handlePowerUpEffect(pu.type.type, 'rival', chosenMove.q, chosenMove.r);
+                        handlePowerUpEffect(pu.type.type, 'rival', chosenMove.q);
                         setActivePowerUps(prev => prev.filter((_, i) => i !== puIndex));
                         sound.playPowerUp(); // Maybe different sound for rival?
                     }
@@ -159,7 +193,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
         }, 400); // AI Speed
 
         return () => clearInterval(interval);
-    }, [isGameOver, tiles, isValidPos, rivalStunned, activePowerUps, paintTile]);
+    }, [isGameOver, tiles, isValidPos, rivalStunned, activePowerUps, paintTile, handlePowerUpEffect]);
 
 
     // --- POWER UPS ---
@@ -180,36 +214,6 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
         return () => clearInterval(spawnTimer);
     }, [isGameOver, tiles, activePowerUps]);
 
-    const handlePowerUpEffect = (type: PowerUpType, who: 'player' | 'rival', originQ: number, _originR: number) => {
-        const opponent = who === 'player' ? 'rival' : 'player';
-
-        if (type === 'vs_pellet') { // Stun
-            if (opponent === 'rival') {
-                setRivalStunned(true);
-                setTimeout(() => setRivalStunned(false), 3000);
-            } else {
-                setPlayerStunned(true);
-                setTimeout(() => setPlayerStunned(false), 3000);
-            }
-        } else if (type === 'vs_shockwave') { // Push
-            // Simple logic: Push opponent away from center provided valid pos, or just teleport them to edge
-            if (opponent === 'rival') {
-                setRivalPos({ q: -HEX_RADIUS, r: HEX_RADIUS }); // Reset position
-            } else {
-                // Player push handled by hook if possible, or just visual shake?
-                // For now, let's just stun them extra long as penalty
-                setPlayerStunned(true);
-                setTimeout(() => setPlayerStunned(false), 1000);
-            }
-        } else if (type === 'vs_slide') { // Paint Row
-            // Paint the entire row of Q
-            const targetRow = tiles.filter(t => t.q === originQ);
-            targetRow.forEach(t => {
-                const { x, y } = getIsometricPos(t.q, t.r);
-                paintTile(t.q, t.r, who, x, y);
-            });
-        }
-    };
 
 
     // --- PLAYER MOVEMENT ---
@@ -221,7 +225,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
         const puIndex = activePowerUps.findIndex(p => p.q === q && p.r === r);
         if (puIndex !== -1) {
             const pu = activePowerUps[puIndex];
-            handlePowerUpEffect(pu.type.type, 'player', q, r);
+            handlePowerUpEffect(pu.type.type, 'player', q);
             setActivePowerUps(prev => prev.filter((_, i) => i !== puIndex));
             sound.playPowerUp();
         }
@@ -242,7 +246,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
             setIsGameOver(true);
         }
 
-    }, [isGameOver, playerStunned, activePowerUps, paintTile, onStateUpdate, tiles]);
+    }, [isGameOver, playerStunned, activePowerUps, paintTile, onStateUpdate, tiles, handlePowerUpEffect]);
 
     const { q, r, isJumping, direction, move, moveTo } = usePlayerMovement(handlePlayerMove, { speedMultiplier: 1.0, maxJumps: 1 }, isValidPos);
 
