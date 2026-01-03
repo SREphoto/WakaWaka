@@ -144,7 +144,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
                     if (puIndex !== -1) {
                         // AI collected powerup
                         const pu = activePowerUps[puIndex];
-                        handlePowerUpEffect(pu.type, 'rival', chosenMove.q, chosenMove.r);
+                        handlePowerUpEffect(pu.type.type, 'rival', chosenMove.q, chosenMove.r);
                         setActivePowerUps(prev => prev.filter((_, i) => i !== puIndex));
                         sound.playPowerUp(); // Maybe different sound for rival?
                     }
@@ -180,7 +180,7 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
         return () => clearInterval(spawnTimer);
     }, [isGameOver, tiles, activePowerUps]);
 
-    const handlePowerUpEffect = (type: PowerUpType, who: 'player' | 'rival', originQ: number, originR: number) => {
+    const handlePowerUpEffect = (type: PowerUpType, who: 'player' | 'rival', originQ: number, _originR: number) => {
         const opponent = who === 'player' ? 'rival' : 'player';
 
         if (type === 'vs_pellet') { // Stun
