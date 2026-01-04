@@ -59,6 +59,7 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
     }, [moveTowardPlayer, type, isVulnerable]);
 
     useEffect(() => {
+        console.log(`Ghost ${id} reporting pos: ${pos.q}, ${pos.r}`);
         if (onPosChange) {
             onPosChange(id, pos.q, pos.r);
         }

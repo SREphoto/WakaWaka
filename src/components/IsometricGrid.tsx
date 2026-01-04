@@ -243,8 +243,21 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
         };
     }, [mode, balance, q, r]);
 
+    const [gracePeriod, setGracePeriod] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setGracePeriod(false), 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleCollision = useCallback((ghostPos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => {
         if (isGameOver || showShop || stunnedGhosts.includes(ghostId)) return;
+
+        if (gracePeriod) {
+            console.log(`Grace period active. Ignoring collision with Ghost(${ghostPos.q},${ghostPos.r})`);
+            return;
+        }
+
         // DEBUG: Log collision check
         // console.log(`Checking collision: Ghost(${ghostPos.q},${ghostPos.r}) vs Player(${q},${r})`);
         if (ghostPos.q === q && ghostPos.r === r) {
@@ -270,7 +283,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 setTimeout(() => window.location.reload(), 2000);
             }
         }
-    }, [q, r, isJumping, isGameOver, showShop, hasSpikeArmor, stunnedGhosts, triggerShake]);
+    }, [q, r, isJumping, isGameOver, showShop, hasSpikeArmor, stunnedGhosts, triggerShake, gracePeriod]);
 
     useEffect(() => {
         if (activePerks.some(p => p.id === 'spike_armor')) setHasSpikeArmor(true);
