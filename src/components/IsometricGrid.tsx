@@ -198,23 +198,23 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 tiles.forEach(tile => {
                     if (tile.state === 'gray') {
                         const { x, y } = getIsometricPos(tile.q, tile.r);
-                        torqueX += (x / 200) * 0.1;
-                        torqueY += (y / 200) * 0.1;
+                        torqueX += (x / 200) * 0.2;
+                        torqueY += (y / 200) * 0.2;
                     }
                 });
 
                 const { x: px, y: py } = getIsometricPos(q, r);
-                torqueX += (px / 200) * 0.8;
-                torqueY += (py / 200) * 0.8;
+                torqueX += (px / 200) * 8.0;
+                torqueY += (py / 200) * 8.0;
 
                 Object.values(ghostPositions).forEach(pos => {
                     const { x, y } = getIsometricPos(pos.q, pos.r);
-                    torqueX += (x / 200) * 0.4;
-                    torqueY += (y / 200) * 0.4;
+                    torqueX += (x / 200) * 4.0;
+                    torqueY += (y / 200) * 4.0;
                 });
 
-                const nextX = prev.x + (torqueX - prev.x) * 0.05;
-                const nextY = prev.y + (torqueY - prev.y) * 0.05;
+                const nextX = prev.x + (torqueX - prev.x) * 0.1;
+                const nextY = prev.y + (torqueY - prev.y) * 0.1;
 
                 if (Math.abs(nextX) > 15 || Math.abs(nextY) > 15) {
                     setIsFlipping(true);
