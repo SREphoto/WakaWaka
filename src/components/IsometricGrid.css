@@ -8,30 +8,29 @@
     background: transparent;
     overflow: hidden;
     position: relative;
-    /* Prevent touch actions like scrolling on mobile while playing */
     touch-action: none;
 }
 
-/* Obsidian Floor Reflection Plane */
+/* Floor Glow/Zone */
 .grid-container::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 200%;
-    background: linear-gradient(to bottom, #050510, #000);
-    transform: translateY(-50%) rotateX(60deg);
+    top: 60%;
+    left: 50%;
+    width: 200vw;
+    height: 200vw;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.03) 0%, transparent 60%);
+    transform: translate(-50%, -50%) rotateX(60deg);
     z-index: 0;
+    pointer-events: none;
 }
 
 .grid-center {
     position: relative;
     transform-style: preserve-3d;
-    transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.6);
+    transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.65);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
-    /* Dynamic scaling to fit screen */
     width: 100%;
     height: 100%;
     display: flex;
@@ -39,7 +38,7 @@
     align-items: center;
 }
 
-/* Responsive Scaling: Scale down on smaller screens */
+/* Responsive Scaling */
 @media (max-width: 768px) {
     .grid-center {
         transform: rotateX(var(--tilt-x)) rotateZ(var(--tilt-z)) scale(0.45);
@@ -52,6 +51,7 @@
     }
 }
 
+/* --- HUD Elements --- */
 .combo-counter {
     position: fixed;
     top: 100px;
@@ -59,8 +59,8 @@
     font-size: 3rem;
     font-weight: 900;
     color: var(--neon-blue);
-    text-shadow: 0 0 20px var(--neon-blue);
-    font-family: 'Outfit', sans-serif;
+    text-shadow: 0 0 20px var(--neon-blue-glow);
+    font-family: var(--font-display);
     font-style: italic;
     animation: combo-pulse 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 10000;
@@ -79,7 +79,7 @@
     }
 }
 
-/* HEXAGON LOGIC - 3D Blocks */
+/* --- 3D Hexagon Tiles --- */
 .tile {
     position: absolute;
     width: 104px;
@@ -88,26 +88,27 @@
     transform: translate3d(var(--pos-x), var(--pos-y), 0);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
-    /* Indicate interactivity */
 }
 
-/* Add hover effect for mouse users to preview path destination */
 .tile:hover {
-    filter: brightness(1.2);
+    filter: brightness(1.3);
+    z-index: 100;
+    /* Pop up on hover */
 }
 
 .tile-side {
     position: absolute;
     width: 52px;
     height: 30px;
-    background: #0a0a12;
+    background: #0d0d1a;
     transform-origin: top;
     backface-visibility: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     pointer-events: none;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
-/* 3D Sides of the Hexagon */
+/* 3D Sides Geometry */
 .side-1 {
     transform: translate3d(26px, 15px, 0) rotateZ(30deg) rotateX(-90deg);
     width: 60px;
@@ -142,29 +143,40 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: #12121e;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
     z-index: 2;
     pointer-events: none;
-    /* Let clicks fall through to tile container */
+    transition: all 0.3s ease;
 }
 
-/* States */
+/* Tile States */
+/* Painted (Gold) */
 .tile.gold .tile-top {
-    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-    box-shadow: 0 0 50px rgba(0, 242, 254, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    background: linear-gradient(135deg, var(--neon-gold) 0%, #ffa500 100%);
+    box-shadow:
+        0 0 30px var(--neon-gold-glow),
+        inset 0 0 10px rgba(255, 255, 255, 0.8);
     border-color: #fff;
     animation: tile-land 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .tile.gold .tile-side {
-    background: #1e3a5f;
-    border-color: rgba(0, 242, 254, 0.2);
+    background: #5c4300;
+    border-color: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 15px var(--neon-gold-glow);
+}
+
+/* Base Tile Hover Effect (for unpainted) */
+.tile:not(.gold):hover .tile-top {
+    border-color: var(--neon-blue);
+    background: rgba(0, 243, 255, 0.1);
+    box-shadow: inset 0 0 20px var(--neon-blue-glow);
 }
 
 @keyframes tile-land {
@@ -179,7 +191,7 @@
     }
 }
 
-/* Floor Glow / Soft Ambient occlusion */
+/* Floor Glow / Ambient Occlusion */
 .tile::before {
     content: '';
     position: absolute;
@@ -187,7 +199,7 @@
     left: 50%;
     width: 140%;
     height: 140%;
-    background: radial-gradient(circle, rgba(0, 242, 254, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--neon-gold-glow) 0%, transparent 70%);
     transform: translate(-50%, -50%) translateZ(-30px);
     pointer-events: none;
     opacity: 0;
@@ -195,142 +207,112 @@
 }
 
 .tile.gold::before {
-    opacity: 1;
+    opacity: 0.8;
 }
 
-.grid-container.shake .grid-center {
-    animation: mega-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
-@keyframes mega-shake {
-
-    10%,
-    90% {
-        transform: rotateX(55deg) translate3d(-3px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: rotateX(55deg) translate3d(6px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: rotateX(55deg) translate3d(-10px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: rotateX(55deg) translate3d(10px, 0, 0);
-    }
-}
-
-/* Pivot Base for TILT Mode */
+/* Tilt Physics Pivot Base */
 .pivot-base {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 200px;
-    height: 400px;
-    background: linear-gradient(to bottom, #1a1a2e, #000);
+    width: 250px;
+    height: 500px;
+    background: linear-gradient(to bottom, #10101a, #000);
     transform: translate(-50%, -50%) translateZ(-500px);
     clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
     border-top: 4px solid var(--neon-blue);
-    box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
+    box-shadow: 0 0 80px var(--neon-blue-glow);
     z-index: -1;
 }
 
+/* Game Over Overlay */
 .game-over-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(20px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 100000;
+    animation: fadeIn 0.5s ease-out;
 }
 
 .neon-text-red {
+    font-family: var(--font-display);
     font-size: 5rem;
-    color: #ff3366;
-    text-shadow: 0 0 20px #ff3366, 0 0 40px #ff3366;
-    font-family: 'Outfit', sans-serif;
+    color: var(--neon-red);
+    text-shadow: 0 0 20px var(--neon-red-glow), 0 0 40px var(--neon-red);
     letter-spacing: 1rem;
-    animation: glitch 0.2s infinite;
+    animation: glitch 2s infinite;
 }
 
 @keyframes glitch {
-    0% {
+
+    0%,
+    100% {
         transform: translate(0);
     }
 
-    20% {
-        transform: translate(-5px, 2px);
+    2% {
+        transform: translate(-2px, 2px);
     }
 
-    40% {
-        transform: translate(5px, -2px);
+    4% {
+        transform: translate(2px, -2px);
     }
 
-    60% {
-        transform: translate(-5px, -2px);
+    6% {
+        transform: translate(-2px, -2px);
     }
 
-    80% {
-        transform: translate(5px, 2px);
-    }
-
-    100% {
+    8% {
         transform: translate(0);
     }
 }
 
-/* Balance Meter for TILT Mode */
+/* Balance Meter */
 .balance-meter {
     position: absolute;
     top: -150px;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 60px;
-    border: 2px solid var(--neon-gold);
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--neon-gold);
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
+    box-shadow: 0 0 20px var(--neon-gold-glow);
     z-index: 1000;
 }
 
 .balance-dot {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
     left: var(--dot-x);
     top: var(--dot-y);
     background: var(--neon-gold);
     border-radius: 50%;
-    box-shadow: 0 0 10px var(--neon-gold);
+    box-shadow: 0 0 15px var(--neon-gold);
     transition: all 0.1s linear;
 }
 
 .balance-warning {
     position: absolute;
-    top: 70px;
+    top: 90px;
     width: 200px;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    color: #ff3366;
+    color: var(--neon-red);
+    font-family: var(--font-display);
     font-weight: bold;
-    font-size: 0.9rem;
-    text-shadow: 0 0 5px #ff3366;
+    font-size: 1rem;
+    text-shadow: 0 0 10px var(--neon-red);
     animation: balance-pulse 0.5s infinite;
     opacity: var(--warning-opacity);
 }

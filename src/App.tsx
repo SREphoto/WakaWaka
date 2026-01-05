@@ -121,6 +121,9 @@ function App() {
           <div className="current-mode-label">{mode.replace('_', ' ').toUpperCase()} MODE</div>
 
           <main className="game-area">
+            <div className="cyber-grid" />
+            <div className="cyber-vignette" />
+
             {renderGameMode()}
           </main>
 
