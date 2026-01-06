@@ -41,6 +41,9 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
     const [rivalPos, setRivalPos] = useState({ q: -HEX_RADIUS, r: HEX_RADIUS });
     const [isGameOver, setIsGameOver] = useState(false);
     const [winner, setWinner] = useState<'player' | 'rival' | null>(null);
+    const [activePowerUps, setActivePowerUps] = useState<{ q: number, r: number, type: PowerUp }[]>([]);
+
+    // Status Effects
     const [rivalStunned, setRivalStunned] = useState(false);
     const [playerStunned, setPlayerStunned] = useState(false);
 

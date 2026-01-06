@@ -75,7 +75,11 @@ const PyramidGrid: React.FC<PyramidGridProps> = ({ onStateUpdate }) => {
             return next;
         });
 
-        const angle = Math.atan2(r, q) * (180 / Math.PI);
+        // Calculate angle and snap to nearest face (60 degrees)
+        let angle = Math.atan2(r, q) * (180 / Math.PI);
+        // Snap to nearest 60
+        angle = Math.round(angle / 60) * 60;
+
         setRotation(-angle);
 
     }, [isGameOver, onStateUpdate, tiles]);
