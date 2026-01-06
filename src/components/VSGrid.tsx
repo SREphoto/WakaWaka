@@ -47,7 +47,11 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
     const [rivalStunned, setRivalStunned] = useState(false);
     const [playerStunned, setPlayerStunned] = useState(false);
 
-    const particlesRef = useRef<ParticleSystemRef>(null);
+    const [rivalSpeed, setRivalSpeed] = useState(400);
+
+    // Refs for safe access in intervals
+    const tilesRef = useRef(tiles);
+    useEffect(() => { tilesRef.current = tiles; }, [tiles]);
 
     const counts = useMemo(() => {
         const p = tiles.filter(t => t.state === 'player').length;
@@ -60,6 +64,30 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
             rCount: r
         };
     }, [tiles]);
+
+    // Timer Logic
+    useEffect(() => {
+        if (isGameOver) return;
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    setIsGameOver(true);
+                    // Determine winner safely
+                    const currentTiles = tilesRef.current;
+                    const p = currentTiles.filter(t => t.state === 'player').length;
+                    const r = currentTiles.filter(t => t.state === 'rival').length;
+                    setWinner(p > r ? 'player' : 'rival');
+                    return 0;
+                }
+                // Escalation: Speed up every 30s
+                if (prev % 30 === 0 && rivalSpeed > 150) {
+                    setRivalSpeed(s => Math.max(150, s * 0.8));
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [isGameOver, rivalSpeed]);
 
     const isValidPos = useCallback((q: number, r: number) => {
         return tiles.some(t => t.q === q && t.r === r);
@@ -190,10 +218,10 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
 
                 return prev;
             });
-        }, 400); // AI Speed
+        }, rivalSpeed); // Dynamic AI Speed
 
         return () => clearInterval(interval);
-    }, [isGameOver, tiles, isValidPos, rivalStunned, activePowerUps, paintTile, handlePowerUpEffect]);
+    }, [isGameOver, tiles, isValidPos, rivalStunned, activePowerUps, paintTile, handlePowerUpEffect, rivalSpeed]);
 
 
     // --- POWER UPS ---
@@ -258,6 +286,18 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
             <div className="vs-progress-bar">
                 <div className="progress-segment segment-player" style={{ '--segment-width': `${counts.player}%` } as React.CSSProperties}></div>
                 <div className="progress-segment segment-rival" style={{ '--segment-width': `${counts.rival}%` } as React.CSSProperties}></div>
+                <div className="vs-timer" style={{
+                    position: 'absolute',
+                    top: '60px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: timeLeft < 30 ? 'red' : 'white',
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    textShadow: '0 0 10px rgba(0,0,0,0.8)'
+                }}>
+                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </div>
             </div>
 
             <ParticleSystem ref={particlesRef} />

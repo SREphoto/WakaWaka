@@ -170,14 +170,21 @@ export const usePlayerMovement = (
             }
 
             switch (e.key) {
+                // North-East / Up-Right Visual
                 case 'ArrowUp':
-                case 'w': move(0, -1); break;
+                case 'w': move(1, -1); break;
+
+                // South-West / Down-Left Visual
                 case 'ArrowDown':
-                case 's': move(0, 1); break;
+                case 's': move(-1, 1); break;
+
+                // North-West / Up-Left Visual
                 case 'ArrowLeft':
-                case 'a': move(-1, 0); break;
+                case 'a': move(0, -1); break;
+
+                // South-East / Down-Right Visual
                 case 'ArrowRight':
-                case 'd': move(1, 0); break;
+                case 'd': move(0, 1); break;
             }
         };
 
