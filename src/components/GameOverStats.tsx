@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import './GameOverStats.css';
-import { sound } from '../utils/SoundEngine';
+// import { sound } from '../utils/SoundEngine';
 
 interface GameOverStatsProps {
     score: number;

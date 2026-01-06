@@ -58,7 +58,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const [stunnedGhosts, setStunnedGhosts] = useState<string[]>([]);
     const [turrets, setTurrets] = useState<{ q: number, r: number }[]>([]);
     const [hasSpikeArmor, setHasSpikeArmor] = useState(false);
-    const [combo, setCombo] = useState(0);
+    const [hasSpikeArmor, setHasSpikeArmor] = useState(false);
     const [combo, setCombo] = useState(0);
     const comboTimer = useRef<number | null>(null);
     const [showTutorial, setShowTutorial] = useState(true);
@@ -291,9 +291,10 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 }
             }, 12000);
         }
-    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles, currentPowerUp, spikes, teleporters, hasSpikeArmor]);
+    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, spikes, teleporters, hasSpikeArmor, isPaused, isPowered, sound, getIsometricPos, particlesRef, setStunnedGhosts, setTiles, teleportRef, currentPowerUp, setActiveEffects, setBalance, setDiamondActive, setIsPowered, setDiamondPos, setCurrentPowerUp, tiles]);
 
-    const { q, r, direction, isJumping, move, moveTo } = usePlayerMovement(isValidPos, handlePlayerMove, movementConfig);
+    // HOOKS: Movement
+    const { q, r, direction, isJumping, move, moveTo } = usePlayerMovement(handlePlayerMove, movementConfig, isValidPos);
 
     // Bind teleport ref
     useEffect(() => {
