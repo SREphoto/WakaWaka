@@ -1,7 +1,7 @@
 :root {
     --bert-size: 36px;
-    --bert-color: #ffd700;
-    --bert-glow: #ffcc00;
+    --bert-color: var(--neon-gold);
+    --bert-glow: var(--neon-gold-glow);
 }
 
 .wakabert {
@@ -20,7 +20,6 @@
 .wakabert-container {
     position: relative;
     transform-style: preserve-3d;
-    /* Counter-rotate to keep character upright relative to world view */
     transform: rotateX(-55deg) rotateZ(45deg);
 }
 
@@ -53,40 +52,44 @@
     position: absolute;
     width: var(--bert-size);
     height: var(--bert-size);
-    background: var(--bert-color);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    background: rgba(255, 215, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     box-sizing: border-box;
-    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.5), 0 0 10px var(--bert-glow);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 15px var(--bert-glow);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
 
 .face.front {
     transform: translateZ(calc(var(--bert-size) / 2));
-    background: #ffcc00;
+    background: linear-gradient(135deg, #ffd700, #b8860b);
 }
 
 .face.back {
     transform: rotateY(180deg) translateZ(calc(var(--bert-size) / 2));
-    background: #e6b800;
+    background: #b8860b;
 }
 
 .face.left {
     transform: rotateY(-90deg) translateZ(calc(var(--bert-size) / 2));
-    background: #cca300;
+    background: #daa520;
 }
 
 .face.right {
     transform: rotateY(90deg) translateZ(calc(var(--bert-size) / 2));
-    background: #cca300;
+    background: #daa520;
 }
 
 .face.top {
     transform: rotateX(90deg) translateZ(calc(var(--bert-size) / 2));
-    background: #ffeb3b;
+    background: #ffe44d;
+    border-color: white;
 }
 
 .face.bottom {
     transform: rotateX(-90deg) translateZ(calc(var(--bert-size) / 2));
-    background: #997a00;
+    background: #8b6508;
+    box-shadow: none;
 }
 
 .eyes-3d {
@@ -99,66 +102,55 @@
 
 .eye-3d {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 6px;
+    /* Cyber visor look */
     background: #000;
-    top: 8px;
-    border-radius: 1px;
-    box-shadow: 0 0 5px #00f3ff;
+    top: 10px;
+    border: 1px solid var(--neon-blue);
+    box-shadow: 0 0 5px var(--neon-blue);
 }
 
 .eye-3d.left {
-    left: 6px;
+    left: 4px;
 }
 
 .eye-3d.right {
-    right: 6px;
+    right: 4px;
 }
 
-/* Jumping Animation */
+/* Jumping Animation - Squash & Stretch */
 .wakabert.jumping .wakabert-body-3d {
-    animation: vox-jump 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: cyber-jump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes vox-jump {
+@keyframes cyber-jump {
     0% {
-        transform: translateY(0) scale3d(1.2, 0.8, 1);
+        transform: scale3d(1.3, 0.7, 1) translateY(0);
     }
 
-    50% {
-        transform: translateY(-50px) scale3d(0.8, 1.2, 1);
+    40% {
+        transform: scale3d(0.8, 1.4, 1) translateY(-60px) rotateX(-20deg);
     }
 
     100% {
-        transform: translateY(0) scale3d(1, 1, 1);
+        transform: scale3d(1, 1, 1) translateY(0);
     }
 }
 
 .wakabert-shadow {
     position: absolute;
-    bottom: -10px;
+    bottom: -20px;
     width: 40px;
-    height: 15px;
-    background: rgba(0, 0, 0, 0.4);
+    height: 20px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
     border-radius: 50%;
     filter: blur(4px);
     transform: rotateX(60deg);
+    transition: all 0.2s;
 }
 
 .wakabert.jumping .wakabert-shadow {
-    animation: v-shadow-fade 0.25s ease-out;
-}
-
-@keyframes v-shadow-fade {
-
-    0%,
-    100% {
-        transform: scale(1) rotateX(60deg);
-        opacity: 0.4;
-    }
-
-    50% {
-        transform: scale(0.4) rotateX(60deg);
-        opacity: 0.1;
-    }
+    transform: scale(0.5) rotateX(60deg);
+    opacity: 0.3;
 }

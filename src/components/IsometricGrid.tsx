@@ -14,6 +14,8 @@ import type { PowerUp } from '../utils/PowerUpSystem';
 import { POWER_UPS } from '../utils/PowerUpSystem';
 import MobileControls from './MobileControls';
 import type { GameMode } from '../App';
+import TutorialOverlay from './TutorialOverlay';
+import GameOverStats from './GameOverStats';
 
 export interface TileData {
     q: number;
@@ -57,14 +59,71 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const [turrets, setTurrets] = useState<{ q: number, r: number }[]>([]);
     const [hasSpikeArmor, setHasSpikeArmor] = useState(false);
     const [combo, setCombo] = useState(0);
+    const [combo, setCombo] = useState(0);
     const comboTimer = useRef<number | null>(null);
+    const [showTutorial, setShowTutorial] = useState(true);
+    const [isPaused, setIsPaused] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
     const particlesRef = useRef<ParticleSystemRef>(null);
     const [activeEffects, setActiveEffects] = useState<string[]>([]);
     const teleportRef = useRef<((q: number, r: number) => void) | null>(null);
 
+    // Hazard State
+    const [spikes, setSpikes] = useState<{ q: number, r: number, active: boolean }[]>([]);
+    const [teleporters, setTeleporters] = useState<{ id: string, q: number, r: number, target: { q: number, r: number }, color: string }[]>([]);
+
+    useEffect(() => {
+        // Initialize Hazards based on Level
+        if (level >= 3) {
+            // Spikes
+            const newSpikes = [];
+            for (let i = 0; i < Math.min(level - 1, 5); i++) {
+                const q = Math.floor(Math.random() * 10) - 5;
+                const r = Math.floor(Math.random() * 10) - 5;
+                if (q !== 0 || r !== 0) newSpikes.push({ q, r, active: false });
+            }
+            setSpikes(newSpikes);
+        }
+
+        if (level >= 4) {
+            // Teleporters (Pairs)
+            const t1 = { q: -4, r: -1, color: '#00f3ff' }; // Left
+            const t2 = { q: 4, r: 1, color: '#00f3ff' };  // Right
+            setTeleporters([
+                { id: 't1', ...t1, target: { q: t2.q, r: t2.r } },
+                { id: 't2', ...t2, target: { q: t1.q, r: t1.r } }
+            ]);
+        }
+    }, [level]);
+
+    // Spike Logic Loop
+    useEffect(() => {
+        if (spikes.length === 0) return;
+        const interval = setInterval(() => {
+            setSpikes(prev => prev.map(s => ({ ...s, active: !s.active })));
+        }, 2000); // Toggle every 2s
+        return () => clearInterval(interval);
+    }, [spikes.length]);
+
     const onGhostPosChange = useCallback((id: string, q: number, r: number) => {
         setGhostPositions(prev => ({ ...prev, [id]: { q, r } }));
     }, []);
+
+    const handleLevelComplete = useCallback(() => {
+        sound.playLevelUp();
+        setLevel(prev => {
+            const nextLevel = prev + 1;
+            onStateUpdate({ level: nextLevel, xp: 500 * prev }); // Bonus XP
+            return nextLevel;
+        });
+
+        // Reset Board
+        setTiles(prev => prev.map(t => ({ ...t, state: t.q === 0 && t.r === 0 ? 'gold' : 'gray' })));
+        setGhostPositions({}); // Reset ghosts
+
+        // Visual Flare
+        particlesRef.current?.emit(window.innerWidth / 2, window.innerHeight / 2, '#ffd700', 50);
+    }, [onStateUpdate]);
 
     const movementConfig = useMemo(() => ({
         speedMultiplier: activePerks.some(p => p.id === 'speed_demon') ? 1.6 : 1.0,
@@ -74,6 +133,12 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const isValidPos = useCallback((q: number, r: number) => {
         return tiles.some(t => t.q === q && t.r === r);
     }, [tiles]);
+
+    const [comboMessage, setComboMessage] = useState<string | null>(null);
+    const [score, setScore] = useState(0);
+    const [maxCombo, setMaxCombo] = useState(0);
+
+    // ... (existing state)
 
     const paintTile = useCallback((q: number, r: number, isSplash = false) => {
         let paintedCount = 0;
@@ -85,14 +150,43 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                     sound.playPaint();
                     setCombo(c => {
                         const newCombo = c + 1;
+                        if (newCombo > maxCombo) setMaxCombo(newCombo);
+
+                        // Score Multiplier
+                        const multiplier = Math.min(newCombo, 10);
+                        const points = 10 * multiplier;
+                        setScore(s => s + points);
+                        onStateUpdate({ score: points }); // Pass delta or total? Original logic implies delta, but let's just update local first
+
+                        // Messages
+                        if (newCombo === 5) setComboMessage("DOMINATING!");
+                        if (newCombo === 10) setComboMessage("UNSTOPPABLE!");
+                        if (newCombo === 20) setComboMessage("GODLIKE!");
+
+                        // Clear message
+                        if ([5, 10, 20].includes(newCombo)) {
+                            setTimeout(() => setComboMessage(null), 2000);
+                        }
+
                         sound.playCombo(newCombo);
                         if (comboTimer.current) window.clearTimeout(comboTimer.current);
-                        comboTimer.current = window.setTimeout(() => setCombo(0), 1000);
+                        comboTimer.current = window.setTimeout(() => {
+                            setCombo(0);
+                            setComboMessage(null);
+                        }, 1500); // 1.5s to keep combo
                         return newCombo;
                     });
                 }
                 const { x, y } = getIsometricPos(q, r);
                 particlesRef.current?.emit(x + window.innerWidth / 2, y + window.innerHeight / 2 - 50, isSplash ? '#33ff99' : '#ffcc00', isSplash ? 3 : 5);
+
+                // Check Level Completion
+                const totalTiles = prev.length;
+                const currentPainted = prev.filter(t => t.state === 'gold').length + 1; // +1 for current
+
+                if (currentPainted >= totalTiles && !isGameOver) {
+                    setTimeout(() => handleLevelComplete(), 500);
+                }
             }
 
             return prev.map((t) => {
@@ -101,7 +195,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
             });
         });
         return paintedCount;
-    }, []);
+    }, [handleLevelComplete, isGameOver]);
 
     const triggerShake = useCallback(() => {
         setCameraShake(true);
@@ -110,6 +204,25 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
 
     const handlePlayerMove = useCallback((q: number, r: number) => {
         if (isGameOver || showShop) return;
+
+        // Hazard Checks
+        const spike = spikes.find(s => s.q === q && s.r === r);
+        if (spike && spike.active && !hasSpikeArmor) {
+            console.log("HIT SPIKE!");
+            sound.playDeath();
+            triggerShake();
+            // Stun or Damage? For now, simple bounce back or game over? Let's do instant death for strict rogue-like feel
+            setIsGameOver(true);
+            return;
+        }
+
+        const tele = teleporters.find(t => t.q === q && t.r === r);
+        if (tele) {
+            sound.playTeleport();
+            teleportRef.current?.(tele.target.q, tele.target.r);
+            return; // Exit, because teleportRef will handle the actual move update
+        }
+
         sound.playHop();
 
         if (activePerks.some(p => p.id === 'stomp')) {
@@ -178,13 +291,14 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                 }
             }, 12000);
         }
-    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles, currentPowerUp]);
+    }, [diamondActive, diamondPos, isGameOver, showShop, onStateUpdate, paintTile, activePerks, triggerShake, combo, tiles, currentPowerUp, spikes, teleporters, hasSpikeArmor]);
 
-    const { q, r, isJumping, direction, move, teleport, moveTo } = usePlayerMovement(handlePlayerMove, movementConfig, isValidPos);
+    const { q, r, direction, isJumping, move, moveTo } = usePlayerMovement(isValidPos, handlePlayerMove, movementConfig);
 
+    // Bind teleport ref
     useEffect(() => {
-        teleportRef.current = teleport;
-    }, [teleport]);
+        teleportRef.current = moveTo;
+    }, [moveTo]);
 
     // Physics Engine for TILT Mode
     useEffect(() => {
@@ -251,7 +365,7 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     }, []);
 
     const handleCollision = useCallback((ghostPos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => {
-        if (isGameOver || showShop || stunnedGhosts.includes(ghostId)) return;
+        if (isGameOver || showShop || stunnedGhosts.includes(ghostId) || isPaused) return;
 
         if (gracePeriod) {
             console.log(`Grace period active. Ignoring collision with Ghost(${ghostPos.q},${ghostPos.r})`);
@@ -334,7 +448,33 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                         <div className="balance-warning" style={{ '--warning-opacity': Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) } as React.CSSProperties}>STABILITY CRITICAL</div>
                     </div>
                 )}
-                {combo > 1 && <div className="combo-counter">COMBO X{combo}</div>}
+                {combo > 1 && <div className="combo-counter">COMBO x{combo}</div>}
+                {comboMessage && <div className="combo-message">{comboMessage}</div>}
+
+                {/* HUD Controls */}
+                <div className="hud-controls">
+                    <button className={`hud-btn ${isMuted ? 'active' : ''}`} onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMuted(!isMuted);
+                        sound.toggleMute(); // Need to implement this in SoundEngine or handle here
+                    }}>
+                        {isMuted ? '🔇' : '🔊'}
+                    </button>
+                    <button className={`hud-btn ${isPaused ? 'active' : ''}`} onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPaused(!isPaused);
+                    }}>
+                        {isPaused ? '▶️' : '⏸️'}
+                    </button>
+                </div>
+
+                {isPaused && !showTutorial && !showShop && !isGameOver && (
+                    <div className="pause-overlay">
+                        <h1 className="neon-text-blue">PAUSED</h1>
+                        <button className="resume-btn" onClick={() => setIsPaused(false)}>RESUME MISSION</button>
+                    </div>
+                )}
+
                 {tiles.map((tile) => {
                     const { x, y } = getIsometricPos(tile.q, tile.r);
                     return (
@@ -349,15 +489,46 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                         >
                             <div className="tile-side side-1"></div><div className="tile-side side-2"></div><div className="tile-side side-3"></div>
                             <div className="tile-side side-4"></div><div className="tile-side side-5"></div><div className="tile-side side-6"></div>
-                            <div className="tile-top"></div>
+                            <div className="tile-top">
+                                {spikes.find(s => s.q === tile.q && s.r === tile.r) && (
+                                    <div className={`hazard-spike ${spikes.find(s => s.q === tile.q && s.r === tile.r)?.active ? 'active' : ''}`}></div>
+                                )}
+                                {teleporters.find(t => t.q === tile.q && t.r === tile.r) && (
+                                    <div className="hazard-teleport" style={{ boxShadow: `0 0 15px ${teleporters.find(t => t.q === tile.q && t.r === tile.r)?.color}` }}></div>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
                 <WakaBert q={q} r={r} isJumping={isJumping} direction={direction} />
                 {!isGameOver && !showShop && (
                     <>
-                        <Ghost id="red" type="red" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
-                        {level > 1 && <Ghost id="green" type="green" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />}
+                        {/* Level 1: Red */}
+                        <Ghost id="ghost-red-1" type="red" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+
+                        {/* Level 2+: Add Pink (Ambusher) */}
+                        {level >= 2 && (
+                            <Ghost id="ghost-pink-1" type="pink" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                        )}
+
+                        {/* Level 3+: Add Blue (Patroller) */}
+                        {level >= 3 && (
+                            <Ghost id="ghost-blue-1" type="blue" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                        )}
+
+                        {/* Level 4+: Add Gold (Fleeing) */}
+                        {level >= 4 && (
+                            <Ghost id="ghost-gold-1" type="gold" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                        )}
+
+                        {/* Level 5+: RAMPAGE - more reds */}
+                        {level >= 5 && (
+                            <Ghost id="ghost-red-2" type="red" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                        )}
+                        {/* Level 10+: RAMPAGE - more pinks */}
+                        {level >= 10 && (
+                            <Ghost id="ghost-pink-2" type="pink" playerPos={{ q, r }} isVulnerable={isPowered} onCollision={handleCollision} onPosChange={onGhostPosChange} isValidPos={isValidPos} />
+                        )}
                     </>
                 )}
                 <PowerDiamond q={diamondPos.q} r={diamondPos.r} active={diamondActive} powerUp={currentPowerUp} />
@@ -382,12 +553,22 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                         });
                     }} />
                 )}
+                {/* ... existing shops ... */}
                 {isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM UNSTABLE: BOARD FLIPPED</h1></div>}
-                {isGameOver && !isFlipping && <div className="game-over-overlay"><h1 className="neon-text-red">SYSTEM CRITICAL: GAME OVER</h1></div>}
+
+                {isGameOver && !isFlipping && (
+                    <GameOverStats
+                        score={score}
+                        level={level}
+                        maxCombo={maxCombo}
+                        onRestart={() => window.location.reload()}
+                    />
+                )}
             </div>
             <div className="mobile-controls-layout">
                 <MobileControls onMove={move} />
             </div>
+            {showTutorial && <TutorialOverlay onDismiss={() => setShowTutorial(false)} />}
         </div >
     );
 };

@@ -19,6 +19,7 @@
     align-items: center;
     z-index: 2000;
     background: rgba(5, 5, 16, 0.85);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     cursor: pointer;
     animation: fadeIn 1s ease-out;
@@ -95,6 +96,7 @@
     align-items: center;
     z-index: 1500;
     background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
 }
 
@@ -248,6 +250,7 @@
     border-radius: 8px;
     text-transform: uppercase;
     letter-spacing: 2px;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
 }
@@ -271,6 +274,7 @@
     pointer-events: auto;
     background: rgba(10, 10, 20, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }

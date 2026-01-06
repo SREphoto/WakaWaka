@@ -4,7 +4,7 @@ import './Ghost.css';
 
 interface GhostProps {
     id: string;
-    type: 'red' | 'green';
+    type: 'red' | 'green' | 'pink' | 'blue' | 'gold';
     playerPos: { q: number; r: number };
     isVulnerable?: boolean;
     onCollision?: (pos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => void;
@@ -18,19 +18,44 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
 
     const moveTowardPlayer = useCallback(() => {
         setPos((prev) => {
+            let targetQ = playerPos.q;
+            let targetR = playerPos.r;
+
+            // AI Behaviors
+            if (type === 'pink') { // Ambusher: Target ahead of player
+                // Need player direction to do this properly, for now target a bit chaotically
+                targetQ += (Math.random() < 0.5 ? 4 : -4);
+                targetR += (Math.random() < 0.5 ? 4 : -4);
+            } else if (type === 'blue') { // Patroller: Prefers edges
+                // Simple patrol: if near center, move out. if near edge, move random.
+                if (Math.abs(prev.q) < 3 && Math.abs(prev.r) < 3) {
+                    targetQ = prev.q > 0 ? 6 : -6;
+                } else {
+                    targetQ = (Math.random() * 10) - 5;
+                    targetR = (Math.random() * 10) - 5;
+                }
+            } else if (type === 'gold') { // Fleeing
+                // Target is opposite of player
+                targetQ = prev.q + (prev.q - playerPos.q);
+                targetR = prev.r + (prev.r - playerPos.r);
+            }
+            // Red is default (Chaser): Targets playerPos directly
+
             let dq = 0;
             let dr = 0;
 
-            if (isVulnerable) {
+            if (isVulnerable && type !== 'gold') { // All run except Gold (who always runs effectively)
+                // Invert target for fleeing logic
                 if (prev.q < playerPos.q) dq = -1;
                 else if (prev.q > playerPos.q) dq = 1;
                 if (prev.r < playerPos.r) dr = -1;
                 else if (prev.r > playerPos.r) dr = 1;
             } else {
-                if (prev.q < playerPos.q) dq = 1;
-                else if (prev.q > playerPos.q) dq = -1;
-                if (prev.r < playerPos.r) dr = 1;
-                else if (prev.r > playerPos.r) dr = -1;
+                // Normal pathfinding towards target
+                if (prev.q < targetQ) dq = 1;
+                else if (prev.q > targetQ) dq = -1;
+                if (prev.r < targetR) dr = 1;
+                else if (prev.r > targetR) dr = -1;
             }
 
             if (dq !== 0 && dr !== 0) {
@@ -50,7 +75,7 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
 
             return { q: nextQ, r: nextR };
         });
-    }, [playerPos, isVulnerable, isValidPos]);
+    }, [playerPos, isVulnerable, isValidPos, type]);
 
     useEffect(() => {
         const speed = type === 'red' ? 800 : 1200;

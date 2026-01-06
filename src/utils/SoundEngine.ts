@@ -1,5 +1,6 @@
 class SoundEngine {
     private ctx: AudioContext | null = null;
+    private isMuted: boolean = false;
 
     private init() {
         if (!this.ctx) {
@@ -7,7 +8,12 @@ class SoundEngine {
         }
     }
 
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+    }
+
     private playTone(freq: number, type: OscillatorType, duration: number, volume: number = 0.1, slideFreq?: number) {
+        if (this.isMuted) return;
         this.init();
         if (!this.ctx) return;
 
@@ -54,6 +60,14 @@ class SoundEngine {
         notes.forEach((note, i) => {
             setTimeout(() => this.playTone(note, 'sine', 0.5, 0.04, note * 1.05), i * 100);
         });
+    }
+
+    playLevelUp() {
+        const notes = [440, 554, 659, 880];
+        notes.forEach((note, i) => {
+            setTimeout(() => this.playTone(note, 'square', 0.4, 0.1, note * 1.01), i * 120);
+        });
+        setTimeout(() => this.playTone(880, 'sawtooth', 0.6, 0.2, 1760), 600);
     }
 
     playCombo(count: number) {

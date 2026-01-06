@@ -1,8 +1,8 @@
 :root {
     --ghost-size: 40px;
-    --ghost-red: #ff3366;
-    --ghost-green: #33ff99;
     --ghost-blue: #33ccff;
+    --ghost-pink: #ff33cc;
+    --ghost-gold: #ffd700;
 }
 
 .ghost {
@@ -14,14 +14,14 @@
     align-items: center;
     transform: translate(var(--pos-x), var(--pos-y));
     z-index: var(--z-index);
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ghost-container-3d {
     position: relative;
     transform-style: preserve-3d;
     transform: rotateX(-55deg) rotateZ(45deg);
-    animation: ghost-float 2s infinite ease-in-out;
+    animation: ghost-float 3s infinite ease-in-out;
 }
 
 @keyframes ghost-float {
@@ -32,7 +32,7 @@
     }
 
     50% {
-        transform: rotateX(-55deg) rotateZ(45deg) translateY(-20px);
+        transform: rotateX(-55deg) rotateZ(45deg) translateY(-15px);
     }
 }
 
@@ -43,29 +43,50 @@
     transform-style: preserve-3d;
 }
 
+/* Ghost Colors & Glows */
 .ghost.red .face {
-    background: var(--ghost-red);
-    box-shadow: 0 0 15px var(--ghost-red);
+    background: rgba(255, 51, 102, 0.8);
+    box-shadow: 0 0 15px var(--neon-red-glow), inset 0 0 10px rgba(255, 255, 255, 0.2);
+    border-color: var(--neon-red);
 }
 
 .ghost.green .face {
-    background: var(--ghost-green);
-    box-shadow: 0 0 15px var(--ghost-green);
+    background: rgba(51, 255, 153, 0.8);
+    box-shadow: 0 0 15px var(--neon-green-glow), inset 0 0 10px rgba(255, 255, 255, 0.2);
+    border-color: var(--neon-green);
+}
+
+.ghost.pink .face {
+    background: rgba(255, 51, 204, 0.8);
+    box-shadow: 0 0 15px var(--ghost-pink), inset 0 0 10px rgba(255, 255, 255, 0.2);
+    border-color: var(--ghost-pink);
+}
+
+.ghost.blue .face {
+    background: rgba(51, 204, 255, 0.8);
+    box-shadow: 0 0 15px var(--ghost-blue), inset 0 0 10px rgba(255, 255, 255, 0.2);
+    border-color: var(--ghost-blue);
+}
+
+.ghost.gold .face {
+    background: rgba(255, 215, 0, 0.9);
+    box-shadow: 0 0 20px var(--ghost-gold), inset 0 0 10px rgba(255, 255, 255, 0.4);
+    border-color: white;
 }
 
 .ghost.vulnerable .face {
-    background: var(--ghost-blue);
-    box-shadow: 0 0 20px var(--ghost-blue);
-    animation: ghost-blink 0.5s infinite alternate;
+    background: rgba(0, 243, 255, 0.8);
+    box-shadow: 0 0 25px var(--neon-blue-glow);
+    animation: ghost-panic 0.5s infinite steps(2);
 }
 
-@keyframes ghost-blink {
-    from {
-        filter: brightness(1);
+@keyframes ghost-panic {
+    0% {
+        filter: invert(0);
     }
 
-    to {
-        filter: brightness(1.5);
+    100% {
+        filter: invert(0.2);
     }
 }
 
@@ -73,35 +94,39 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     box-sizing: border-box;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
 
+/* Face Transforms */
 .face.front {
     transform: translateZ(calc(var(--ghost-size) / 2));
 }
 
 .face.back {
     transform: rotateY(180deg) translateZ(calc(var(--ghost-size) / 2));
-    filter: brightness(0.7);
+    filter: brightness(0.8);
 }
 
 .face.left {
     transform: rotateY(-90deg) translateZ(calc(var(--ghost-size) / 2));
-    filter: brightness(0.8);
+    filter: brightness(0.9);
 }
 
 .face.right {
     transform: rotateY(90deg) translateZ(calc(var(--ghost-size) / 2));
-    filter: brightness(0.8);
+    filter: brightness(0.9);
 }
 
 .face.top {
     height: var(--ghost-size);
     transform: rotateX(90deg) translateZ(calc(var(--ghost-size) / 2));
-    filter: brightness(1.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
+/* Ghost Eyes - Pixel Style */
 .ghost-eyes-3d {
     position: absolute;
     width: 100%;
@@ -115,25 +140,50 @@
     width: 12px;
     height: 12px;
     background: #fff;
-    top: 10px;
-    border-radius: 50%;
+    top: 12px;
+    box-shadow: 0 0 5px #fff;
 }
 
 .eye-p.left {
-    left: 6px;
+    left: 8px;
 }
 
 .eye-p.right {
-    right: 6px;
+    right: 8px;
+}
+
+/* Looking directions */
+.ghost.face-right .eye-p {
+    transform: translateX(4px);
+}
+
+.ghost.face-left .eye-p {
+    transform: translateX(-4px);
+}
+
+.ghost.face-up .eye-p {
+    transform: translateY(-4px);
+}
+
+.ghost.face-down .eye-p {
+    transform: translateY(2px);
+}
+
+/* Vulnerable Eyes */
+.ghost.vulnerable .eye-p {
+    height: 4px;
+    top: 15px;
+    width: 14px;
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .ghost-shadow-3d {
     position: absolute;
-    bottom: -10px;
-    width: 30px;
-    height: 12px;
-    background: rgba(0, 0, 0, 0.3);
+    bottom: -15px;
+    width: 32px;
+    height: 16px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
     border-radius: 50%;
-    filter: blur(4px);
     transform: rotateX(60deg);
+    filter: blur(3px);
 }

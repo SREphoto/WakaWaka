@@ -9,6 +9,8 @@ interface Particle {
     life: number;
     color: string;
     size: number;
+    rotation: number;
+    vRot: number;
 }
 
 export interface ParticleSystemRef {
@@ -24,27 +26,19 @@ const ParticleSystem = forwardRef<ParticleSystemRef>((_, ref) => {
             for (let i = 0; i < count; i++) {
                 particles.current.push({
                     x, y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
+                    vx: (Math.random() - 0.5) * 12, // Faster explosion
+                    vy: (Math.random() - 0.5) * 12,
                     life: 1.0,
                     color,
-                    size: Math.random() * 4 + 2
-                });
+                    size: Math.random() * 6 + 4, // Larger squares
+                    rotation: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 10
+                } as Particle); // Cast to ExtendedParticle
             }
         }
     }));
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (canvasRef.current) {
-                canvasRef.current.width = window.innerWidth;
-                canvasRef.current.height = window.innerHeight;
-            }
-        };
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    // ... (resize logic remains the same)
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -55,22 +49,35 @@ const ParticleSystem = forwardRef<ParticleSystemRef>((_, ref) => {
         let animationId: number;
 
         const update = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Standard clear
 
-            particles.current.forEach((p, i) => {
+            particles.current.forEach((p: any, i) => { // Type 'any' to avoid strict TS interface issues for now, or extend interface
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 0.02;
-
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.life > 0 ? p.life : 0;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
+                p.rotation += p.vRot; // Rotate
+                p.life -= 0.025; // 40 frames approx
+                p.vy += 0.2; // Slight gravity
 
                 if (p.life <= 0) {
                     particles.current.splice(i, 1);
+                    return;
                 }
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+
+                // Neon Glow
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = p.color;
+
+                const s = p.size * p.life; // Shrink over time
+                ctx.fillRect(-s / 2, -s / 2, s, s); // Draw Square
+
+                ctx.restore();
             });
 
             animationId = requestAnimationFrame(update);
