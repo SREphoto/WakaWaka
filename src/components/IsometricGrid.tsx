@@ -58,7 +58,6 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
     const [stunnedGhosts, setStunnedGhosts] = useState<string[]>([]);
     const [turrets, setTurrets] = useState<{ q: number, r: number }[]>([]);
     const [hasSpikeArmor, setHasSpikeArmor] = useState(false);
-    const [hasSpikeArmor, setHasSpikeArmor] = useState(false);
     const [combo, setCombo] = useState(0);
     const comboTimer = useRef<number | null>(null);
     const [showTutorial, setShowTutorial] = useState(true);
