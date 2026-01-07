@@ -5,11 +5,12 @@ import './WakaBert.css';
 interface WakaBertProps {
     q: number;
     r: number;
+    z?: number; // Added z-height prop
     isJumping: boolean;
     direction?: 'left' | 'right' | 'up' | 'down';
 }
 
-const WakaBert: React.FC<WakaBertProps> = ({ q, r, isJumping, direction = 'down' }) => {
+const WakaBert: React.FC<WakaBertProps> = ({ q, r, z = 0, isJumping, direction = 'down' }) => {
     const { x, y } = getIsometricPos(q, r);
 
     return (
@@ -18,7 +19,9 @@ const WakaBert: React.FC<WakaBertProps> = ({ q, r, isJumping, direction = 'down'
             style={{
                 '--pos-x': `${x}px`,
                 '--pos-y': `${y}px`,
-                '--z-index': Math.floor(y) + 2000,
+                // Incorporate Z into position and layering
+                '--pos-z': `${z}px`,
+                '--z-index': Math.floor(y + z) + 2000,
             } as React.CSSProperties}
         >
             <div className="wakabert-container">

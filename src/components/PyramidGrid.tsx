@@ -126,8 +126,9 @@ const PyramidGrid: React.FC<PyramidGridProps> = ({ onStateUpdate }) => {
                         </div>
                     );
                 })}
-                <div className="pyramid-player-wrapper" style={{ '--player-z': `${currentLayer * 40}px` } as React.CSSProperties}>
-                    <WakaBert q={q} r={r} isJumping={isJumping} direction={direction} />
+                <div className="pyramid-player-wrapper">
+                    {/* Pass calculated Z to WakaBert for proper sorting */}
+                    <WakaBert q={q} r={r} z={currentLayer * 40} isJumping={isJumping} direction={direction} />
                 </div>
                 {!isGameOver && (
                     <>

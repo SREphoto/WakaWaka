@@ -20,6 +20,7 @@ import GameOverStats from './GameOverStats';
 export interface TileData {
     q: number;
     r: number;
+    h: number; // Height for 3D cascading effect
     state: 'gray' | 'gold' | 'blue';
 }
 
@@ -38,7 +39,10 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
             const rStart = Math.max(-HEX_RADIUS, -q - HEX_RADIUS);
             const rEnd = Math.min(HEX_RADIUS, -q + HEX_RADIUS);
             for (let r = rStart; r <= rEnd; r++) {
-                initialTiles.push({ q, r, state: q === 0 && r === 0 ? 'gold' : 'gray' });
+                // Classic Mode gets random height for "Cascading" look
+                // Tilt Mode stays flat (h=0) for clear physics
+                const h = mode === 'classic' ? Math.floor(Math.random() * 4) : 0;
+                initialTiles.push({ q, r, h, state: q === 0 && r === 0 ? 'gold' : 'gray' });
             }
         }
         return initialTiles;
@@ -327,8 +331,10 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                     torqueY += (y / 200) * 4.0;
                 });
 
-                const nextX = prev.x + (torqueX - prev.x) * 0.1;
-                const nextY = prev.y + (torqueY - prev.y) * 0.1;
+                // Damped physics for better control
+                const nextX = prev.x + (torqueX - prev.x) * 0.05; // Reduced from 0.1 to 0.05
+                const nextY = prev.y + (torqueY - prev.y) * 0.05;
+
 
                 if (Math.abs(nextX) > 15 || Math.abs(nextY) > 15) {
                     setIsFlipping(true);
@@ -443,10 +449,23 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
             <ParticleSystem ref={particlesRef} />
             <div className={`grid-center ${isFlipping ? 'flip-death' : ''}`} style={{ '--tilt-x': `${tilt.rotateX}deg`, '--tilt-z': `${tilt.rotateZ}deg` } as React.CSSProperties}>
                 {mode === 'tilt' && (
-                    <div className="balance-meter">
-                        <div className="balance-dot" style={{ '--dot-x': `${50 + balance.x * 2}%`, '--dot-y': `${50 + balance.y * 2}%` } as React.CSSProperties}></div>
-                        <div className="balance-warning" style={{ '--warning-opacity': Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) } as React.CSSProperties}>STABILITY CRITICAL</div>
-                    </div>
+                    <>
+                        <div className="tilt-spirit-level">
+                            <div className="bubble-housing">
+                                <div className="bubble-liquid"></div>
+                                <div className="bubble-air" style={{
+                                    transform: `translate(${balance.x * 3}px, ${balance.y * 3}px)`
+                                }}></div>
+                                <div className="level-markers"></div>
+                            </div>
+                            <div className="tilt-label">KEEPIN' IT LEVEL</div>
+                        </div>
+                        <div className="balance-meter">
+                            {/* Keep the old small one as a backup or remove? Let's keep for precision */}
+                            <div className="balance-dot" style={{ '--dot-x': `${50 + balance.x * 2}%`, '--dot-y': `${50 + balance.y * 2}%` } as React.CSSProperties}></div>
+                            <div className="balance-warning" style={{ '--warning-opacity': Math.max(0, (Math.abs(balance.x) + Math.abs(balance.y)) / 20 - 0.5) } as React.CSSProperties}>STABILITY CRITICAL</div>
+                        </div>
+                    </>
                 )}
                 {combo > 1 && <div className="combo-counter">COMBO x{combo}</div>}
                 {comboMessage && <div className="combo-message">{comboMessage}</div>}
@@ -481,7 +500,12 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                         <div
                             key={`${tile.q}-${tile.r}`}
                             className={`tile ${tile.state}`}
-                            style={{ '--pos-x': `${x}px`, '--pos-y': `${y}px`, 'zIndex': Math.floor(y + 1000) } as React.CSSProperties}
+                            style={{
+                                '--pos-x': `${x}px`,
+                                '--pos-y': `${y}px`,
+                                '--pos-z': `${tile.h * 20}px`,
+                                'zIndex': Math.floor(y + (tile.h * 20) + 1000)
+                            } as React.CSSProperties}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 moveTo(tile.q, tile.r);
@@ -546,7 +570,8 @@ const IsometricGrid: React.FC<IsometricGridProps> = ({ onStateUpdate, mode }) =>
                                 const rStart = Math.max(-HEX_RADIUS, -q - HEX_RADIUS);
                                 const rEnd = Math.min(HEX_RADIUS, -q + HEX_RADIUS);
                                 for (let r = rStart; r <= rEnd; r++) {
-                                    newTiles.push({ q, r, state: q === 0 && r === 0 ? 'gold' : 'gray' });
+                                    const h = mode === 'classic' ? Math.floor(Math.random() * 4) : 0;
+                                    newTiles.push({ q, r, h, state: q === 0 && r === 0 ? 'gold' : 'gray' });
                                 }
                             }
                             return newTiles;
