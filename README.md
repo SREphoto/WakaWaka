@@ -1,73 +1,66 @@
-# React + TypeScript + Vite
+# WakaWaka 2.0 🕹️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A Cyber-Arcade Isometric Puzzle Game by **[SREdesigns.com](https://sredesigns.com)**.
 
-Currently, two official plugins are available:
+![Game Banner](https://img.shields.io/badge/Status-Live-success) ![Version](https://img.shields.io/badge/Version-2.0.0-blue) ![Tech](https://img.shields.io/badge/Tech-React%20%7C%20TypeScript%20%7C%20Vite-violet)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**WakaWaka** is a modern reimagining of classic arcade mechanics, built entirely with web technologies. Control **WakaBert** in a neon-soaked isometric world, claiming territory by painting tiles while outsmarting AI ghosts and navigating treacherous hazards.
 
-## React Compiler
+## 🎮 Play Now
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**[Play the Game](https://srephoto.github.io/WakaWaka/)**
 
-## Expanding the ESLint configuration
+## 📂 Documentation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **[Product Requirements (PRD)](./PRD.md)**: Detailed breakdown of game mechanics, modes, and systems.
+- **[MVP Scope](./MVP.md)**: Definition of the Minimum Viable Product and Architecture Diagrams.
+- **[Changelog](./CHANGELOG.md)**: History of updates and versions.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ✨ Key Features
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Isometric 3D Engine**: Built with pure CSS transformations (no Canvas/WebGL required).
+- **Multiple Modes**:
+  - **Classic**: Survive and advance through infinite levels.
+  - **VS Mode**: Battle an AI Rival for board dominance.
+  - **Pyramid**: Navigate a multi-layered 3D structure.
+- **Reactive Audio**: Synthesized sound effects powered by the Web Audio API.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ Tech Stack
+
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: CSS Modules + Variables
+- **Deployment**: GitHub Pages
+
+## 🚀 Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🧜‍♀️ System Flow
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+graph LR
+    A[Start Game] --> B{Choose Mode}
+    B -->|Classic| C[Isometric Grid]
+    B -->|VS| D[Territory War]
+    B -->|Pyramid| E[3D Clustering]
+    
+    C --> F[Game Loop]
+    D --> F
+    E --> F
+    
+    F -->|Win/Loss| G[Game Over Stats]
+    G -->|Reboot| A
 ```
+
+---
+*Created by SREdesigns.com - Building the future of web interactive experiences.*

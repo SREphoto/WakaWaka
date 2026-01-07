@@ -10,9 +10,11 @@ interface GhostProps {
     onCollision?: (pos: { q: number, r: number }, isVulnerable: boolean, ghostId: string) => void;
     onPosChange?: (id: string, q: number, r: number) => void;
     isValidPos?: (q: number, r: number) => boolean;
+    getZ?: (q: number, r: number) => number;
+    speedMultiplier?: number;
 }
 
-const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onCollision, onPosChange, isValidPos }) => {
+const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onCollision, onPosChange, isValidPos, getZ, speedMultiplier = 1 }) => {
     const [pos, setPos] = useState({ q: id === 'red' ? 5 : -5, r: id === 'red' ? 0 : 0 });
     const [lastMove, setLastMove] = useState<'left' | 'right' | 'up' | 'down'>('down');
 
@@ -78,10 +80,11 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
     }, [playerPos, isVulnerable, isValidPos, type]);
 
     useEffect(() => {
-        const speed = type === 'red' ? 800 : 1200;
+        const baseSpeed = type === 'red' ? 800 : 1200;
+        const speed = baseSpeed / speedMultiplier;
         const interval = setInterval(moveTowardPlayer, isVulnerable ? speed * 1.5 : speed);
         return () => clearInterval(interval);
-    }, [moveTowardPlayer, type, isVulnerable]);
+    }, [moveTowardPlayer, type, isVulnerable, speedMultiplier]);
 
     useEffect(() => {
         console.log(`Ghost ${id} reporting pos: ${pos.q}, ${pos.r}`);
@@ -93,6 +96,7 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
         }
     }, [pos, onCollision, onPosChange, isVulnerable, id]);
 
+    const z = getZ ? getZ(pos.q, pos.r) : 0;
     const { x, y } = getIsometricPos(pos.q, pos.r);
 
     return (
@@ -101,7 +105,8 @@ const Ghost: React.FC<GhostProps> = ({ id, type, playerPos, isVulnerable, onColl
             style={{
                 '--pos-x': `${x}px`,
                 '--pos-y': `${y}px`,
-                '--z-index': Math.floor(y) + 1800,
+                '--pos-z': `${z}px`,
+                '--z-index': Math.floor(y + z) + 1800,
             } as React.CSSProperties}
         >
             <div className="ghost-container-3d">

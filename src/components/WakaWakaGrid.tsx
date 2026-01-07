@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { getIsometricPos } from '../utils/GameEngine';
 import './IsometricGrid.css';
 import './WakaWakaGrid.css';
@@ -42,7 +42,31 @@ const WakaWakaGrid: React.FC<WakaWakaGridProps> = ({ onStateUpdate }) => {
     const [fruitType, setFruitType] = useState<'cherry' | 'strawberry' | 'orange'>('cherry');
     const [fruitActive, setFruitActive] = useState(true);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [stage, setStage] = useState(1);
+    const [isLevelTransition, setIsLevelTransition] = useState(false);
     const particlesRef = useRef<ParticleSystemRef>(null);
+
+    const totalPaintable = useMemo(() => tiles.filter(t => t.state !== 'wall').length, [tiles]);
+    const paintedCount = useMemo(() => tiles.filter(t => t.state === 'gold').length, [tiles]);
+
+    const handleLevelComplete = useCallback(() => {
+        setIsLevelTransition(true);
+        sound.playLevelUp();
+        onStateUpdate({ xp: 200, score: 1000 });
+
+        setTimeout(() => {
+            setStage(s => s + 1);
+            setTiles(prev => prev.map(t => t.state === 'wall' ? t : { ...t, state: 'gray' }));
+            setIsLevelTransition(false);
+            sound.playPowerUp(); // Start sound
+        }, 3000);
+    }, [onStateUpdate]);
+
+    useEffect(() => {
+        if (paintedCount > 0 && paintedCount === totalPaintable && !isLevelTransition) {
+            handleLevelComplete();
+        }
+    }, [paintedCount, totalPaintable, isLevelTransition, handleLevelComplete]);
 
     const isValidPos = useCallback((q: number, r: number) => {
         const tile = tiles.find(t => t.q === q && t.r === r);
@@ -50,7 +74,7 @@ const WakaWakaGrid: React.FC<WakaWakaGridProps> = ({ onStateUpdate }) => {
     }, [tiles]);
 
     const handlePlayerMove = useCallback((q: number, r: number) => {
-        if (isGameOver) return;
+        if (isGameOver || isLevelTransition) return;
         sound.playHop();
 
         if (fruitActive && q === fruitPos.q && r === fruitPos.r) {
@@ -84,7 +108,7 @@ const WakaWakaGrid: React.FC<WakaWakaGridProps> = ({ onStateUpdate }) => {
             }
             return next;
         });
-    }, [isGameOver, onStateUpdate, fruitActive, fruitPos, tiles]);
+    }, [isGameOver, isLevelTransition, onStateUpdate, fruitActive, fruitPos, tiles]);
 
     const { q, r, isJumping, direction, move, teleport } = usePlayerMovement(handlePlayerMove, { speedMultiplier: 1.1, maxJumps: 1 }, isValidPos);
 
@@ -142,11 +166,18 @@ const WakaWakaGrid: React.FC<WakaWakaGridProps> = ({ onStateUpdate }) => {
 
                 {fruitActive && <Fruit pos={fruitPos} type={fruitType} />}
 
-                {!isGameOver && (
+                {!isGameOver && !isLevelTransition && (
                     <>
-                        <Ghost id="blinky" type="red" playerPos={{ q, r }} onCollision={handleGhostCollision} isValidPos={isValidPos} />
-                        <Ghost id="pinky" type="red" playerPos={{ q, r }} onCollision={handleGhostCollision} isValidPos={isValidPos} />
+                        <Ghost id="blinky" type="red" playerPos={{ q, r }} onCollision={handleGhostCollision} isValidPos={isValidPos} speedMultiplier={1 + (stage - 1) * 0.1} />
+                        <Ghost id="pinky" type="pink" playerPos={{ q, r }} onCollision={handleGhostCollision} isValidPos={isValidPos} speedMultiplier={1 + (stage - 1) * 0.1} />
                     </>
+                )}
+
+                {isLevelTransition && (
+                    <div className="level-transition-overlay">
+                        <h1 className="neon-text-gold">STAGE {stage} CLEARED!</h1>
+                        <p className="neon-text-blue">PREPARE FOR STAGE {stage + 1}</p>
+                    </div>
                 )}
 
                 {isGameOver && (

@@ -186,8 +186,17 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
 
                     if (tile) {
                         let score = 0;
-                        if (tile.state === 'player') score += 20; // Steal from player
-                        if (tile.state === 'gray') score += 10;   // Claim free
+                        // Smarter AI Weights
+                        if (tile.state === 'player') score += 25; // Aggressive stealing
+                        if (tile.state === 'gray') score += 12;   // Farming
+
+                        // Distance penalty (keep it moving efficiently)
+                        // This is local search, so distance is always 1.
+
+                        // Avoid backtracking if possible (simple memory?)
+                        // For now, random noise handles this.
+
+                        // Check if powerup is here
 
                         // Check if powerup is here
                         if (activePowerUps.some(p => p.q === nq && p.r === nr)) score += 50;
@@ -346,14 +355,54 @@ const VSGrid: React.FC<VSGridProps> = ({ onStateUpdate }) => {
                 {/* Visual indicator for Stun */}
                 {playerStunned && <div className="stun-indicator" style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)', color: 'yellow', fontSize: '2rem', zIndex: 9000 }}>⚡ STUNNED ⚡</div>}
 
-                <div className="rival-bert" style={{
-                    '--rival-x': `${rivalScreenPos.x}px`,
-                    '--rival-y': `${rivalScreenPos.y}px`,
-                    'zIndex': Math.floor(rivalScreenPos.y) + 2000
-                } as React.CSSProperties}>
-                    <WakaBert q={0} r={0} isJumping={false} direction="up" />
-                    {rivalStunned && <div className="stun-icon">⚡</div>}
+                {/* Rival Visual (Controlled by VS AI) - Manually rendered to follow AI position exactly */}
+
+                {/* Manual positioning override via style injection on the Ghost wrapper? No, Ghost is self-contained. 
+                    We need to use the Ghost's internal props or just render a Ghost-like div if the Component doesn't support direct pos control easily.
+                    Actually, Ghost uses internal state `pos`. We added `onPosChange` but not a way to CONTROL it from outside fully except `playerPos` chase logic.
+                    
+                    WAIT: The current Ghost component CHASES `playerPos`. 
+                    If we want a Controlled Ghost, we need to modify Ghost.tsx to accept an override `pos` or we make a `RivalGhost` component.
+                    OR, we just use the styles and a specific class.
+                    
+                    Let's check Ghost.tsx again. It has internal state initialized from props, but drives itself.
+                    
+                    Better approach: Render the Ghost specific DOM structure here directly for full control, 
+                    OR update Ghost to accept `forcedPos`.
+                    
+                    Let's look at lines 349-356 in VSGrid. They render `rival-bert`.
+                    I will replace this with the Ghost Visuals directly to avoid fighting the Ghost Component's internal AI.
+                */}
+                <div className={`ghost blue ${rivalStunned ? 'vulnerable' : ''} face-down`}
+                    style={{
+                        '--pos-x': `${rivalScreenPos.x}px`,
+                        '--pos-y': `${rivalScreenPos.y}px`,
+                        '--z-index': Math.floor(rivalScreenPos.y) + 2000,
+                        transition: 'transform 0.4s linear' // Smooth AI movement
+                    } as React.CSSProperties}
+                >
+                    <div className="ghost-container-3d">
+                        <div className="ghost-body-3d">
+                            <div className="face front"></div><div className="face back"></div>
+                            <div className="face left"></div><div className="face right"></div>
+                            <div className="face top"></div>
+                            <div className="ghost-eyes-3d">
+                                <div className="eye-p white left"></div><div className="eye-p white right"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                {rivalStunned && <div className="stun-indicator" style={{
+                    position: 'absolute',
+                    top: Math.max(0, rivalScreenPos.y - 60),
+                    left: rivalScreenPos.x + window.innerWidth / 2,
+                    transform: 'translate(-50%, 0)',
+                    color: '#00f3ff',
+                    fontWeight: 'bold',
+                    textShadow: '0 0 5px #000',
+                    zIndex: 9000
+                }}>⚡ MALFUNCTION ⚡</div>}
 
                 {isGameOver && (
                     <div className={winner === 'player' ? 'victory-banner' : 'victory-banner defeat-banner'}>

@@ -3,6 +3,7 @@ import { getIsometricPos } from '../utils/GameEngine';
 import './IsometricGrid.css';
 import './PyramidGrid.css';
 import WakaBert from './WakaBert';
+import Ghost from './Ghost';
 import ParticleSystem from './ParticleSystem';
 import type { ParticleSystemRef } from './ParticleSystem';
 import { usePlayerMovement } from '../hooks/usePlayerMovement';
@@ -42,8 +43,19 @@ const PyramidGrid: React.FC<PyramidGridProps> = ({ onStateUpdate }) => {
     });
 
     const [rotation, setRotation] = useState(0);
-    const [isGameOver] = useState(false);
+    const [isGameOver, setIsGameOver] = useState(false);
     const particlesRef = useRef<ParticleSystemRef>(null);
+
+    const getZ = useCallback((q: number, r: number) => {
+        const possible = tiles.filter(t => t.q === q && t.r === r);
+        const h = possible.length > 0 ? Math.max(...possible.map(t => t.h)) : 0;
+        return h * 40;
+    }, [tiles]);
+
+    const handleGhostCollision = useCallback(() => {
+        setIsGameOver(true);
+        sound.playDeath();
+    }, []);
 
     const isValidPos = useCallback((q: number, r: number) => {
         return tiles.some(t => t.q === q && t.r === r);
@@ -117,6 +129,18 @@ const PyramidGrid: React.FC<PyramidGridProps> = ({ onStateUpdate }) => {
                 <div className="pyramid-player-wrapper" style={{ '--player-z': `${currentLayer * 40}px` } as React.CSSProperties}>
                     <WakaBert q={q} r={r} isJumping={isJumping} direction={direction} />
                 </div>
+                {!isGameOver && (
+                    <>
+                        <Ghost id="pyramid-red" type="red" playerPos={{ q, r }} isValidPos={isValidPos} getZ={getZ} onCollision={handleGhostCollision} />
+                        <Ghost id="pyramid-pink" type="pink" playerPos={{ q, r }} isValidPos={isValidPos} getZ={getZ} onCollision={handleGhostCollision} />
+                    </>
+                )}
+                {isGameOver && (
+                    <div className="game-over-overlay" style={{ transform: `rotate(${rotation}deg)` }}>
+                        <h1 className="neon-text-red">FALLEN FROM GRACE</h1>
+                        <button className="exit-menu-btn neon-border-red" onClick={() => window.location.reload()}>RETRY CLIMB</button>
+                    </div>
+                )}
             </div>
             <MobileControls onMove={move} />
         </div>

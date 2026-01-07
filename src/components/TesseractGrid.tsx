@@ -15,6 +15,7 @@ const TesseractGrid: React.FC<TesseractGridProps> = ({ onStateUpdate }) => {
     const [angle, setAngle] = useState(0);
     const [paintedFaces, setPaintedFaces] = useState<number[]>([]);
     const [playerPos, setPlayerPos] = useState({ faceIndex: 0, x: 0, y: 0 });
+    const [isComplete, setIsComplete] = useState(false);
     const particlesRef = useRef<ParticleSystemRef>(null);
 
     useEffect(() => {
@@ -23,6 +24,14 @@ const TesseractGrid: React.FC<TesseractGridProps> = ({ onStateUpdate }) => {
         }, 16);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (paintedFaces.length === TESSERACT_FACES.length && !isComplete) {
+            setIsComplete(true);
+            sound.playLevelUp();
+            onStateUpdate({ xp: 500, score: 5000 });
+        }
+    }, [paintedFaces, isComplete, onStateUpdate]);
 
     const projectedVertices = useMemo(() => {
         return TESSERACT_VERTICES.map(v => {
@@ -106,6 +115,15 @@ const TesseractGrid: React.FC<TesseractGridProps> = ({ onStateUpdate }) => {
             </div>
 
             <div className="mode-label-4d">DIMENSION: W-AXIS ROTATION ACTIVE</div>
+
+            {isComplete && (
+                <div className="game-over-overlay">
+                    <h1 className="neon-text-blue">HYPERCUBE STABILIZED</h1>
+                    <p className="neon-text-white">QUANTUM SUIT UNLOCKED (MOCK)</p>
+                    <button className="exit-menu-btn neon-border-blue" onClick={() => window.location.reload()}>RESET DIMENSION</button>
+                </div>
+            )}
+
             <MobileControls onMove={handleMove} />
         </div>
     );
