@@ -1,0 +1,134 @@
+.qbert-enemy {
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate3d(calc(var(--pos-x) - 20px), calc(var(--pos-y) - 40px), 0);
+    transition: transform 0.4s linear;
+    pointer-events: none;
+}
+
+.qbert-enemy.jumping {
+    animation: enemy-hop 0.4s ease-in-out;
+}
+
+@keyframes enemy-hop {
+    0% {
+        margin-top: 0;
+    }
+
+    50% {
+        margin-top: -30px;
+    }
+
+    100% {
+        margin-top: 0;
+    }
+}
+
+/* --- RED/PURPLE BALL --- */
+.ball-shape {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000);
+    box-shadow: 0 4px 5px rgba(0, 0, 0, 0.4);
+}
+
+.qbert-enemy.purple_ball .ball-shape {
+    background: radial-gradient(circle at 30% 30%, #d966ff, #8000cc);
+}
+
+/* --- COILY SNAKE --- */
+.snake-body {
+    width: 40px;
+    height: 50px;
+    position: relative;
+    top: -10px;
+}
+
+.snake-head {
+    width: 30px;
+    height: 30px;
+    background: #8000cc;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 5px;
+    z-index: 2;
+}
+
+.snake-eye {
+    width: 8px;
+    height: 8px;
+    background: yellow;
+    border-radius: 50%;
+    position: absolute;
+    top: 8px;
+}
+
+.snake-eye.left {
+    left: 4px;
+}
+
+.snake-eye.right {
+    right: 4px;
+}
+
+.snake-eye::after {
+    content: '';
+    width: 2px;
+    height: 4px;
+    background: black;
+    position: absolute;
+    top: 2px;
+    left: 3px;
+}
+
+.snake-coils {
+    width: 36px;
+    height: 30px;
+    border: 8px solid #8000cc;
+    border-radius: 50%;
+    position: absolute;
+    top: 15px;
+    left: 2px;
+    border-top: none;
+}
+
+/* --- SLICK / SAM --- */
+.gremlin-body {
+    width: 30px;
+    height: 40px;
+    background: #00cc44;
+    /* Slick is Green */
+    border-radius: 15px 15px 5px 5px;
+}
+
+.qbert-enemy.sam .gremlin-body {
+    background: #cc4400;
+    /* Sam is Reddish? Or vice versa. Let's stick to Green */
+}
+
+.gremlin-glasses {
+    width: 24px;
+    height: 10px;
+    background: black;
+    position: absolute;
+    top: 10px;
+    left: 3px;
+    border-radius: 2px;
+}
+
+.enemy-shadow {
+    position: absolute;
+    width: 30px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    bottom: -5px;
+    left: 5px;
+    filter: blur(2px);
+    z-index: -1;
+}
